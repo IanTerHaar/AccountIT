@@ -7,23 +7,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.ianterhaar.accountit.ui.theme.AccountITTheme
+import com.ianterhaar.accountit.ui.theme.AccountItTheme
+import com.ianterhaar.accountit.ui.auth.LoginScreen
+import com.ianterhaar.accountit.ui.auth.RegisterScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AccountITTheme {
+            AccountItTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    AuthScreens(Modifier.padding(innerPadding))
                 }
             }
         }
@@ -31,17 +28,29 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun AuthScreens(modifier: Modifier = Modifier) {
+    var showLogin by remember { mutableStateOf(true) }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AccountITTheme {
-        Greeting("Android")
+    if (showLogin) {
+        LoginScreen(
+            onLoginClick = { username, password ->
+                // Handle login logic here
+                println("Login attempted with: $username, $password")
+            },
+            onRegisterClick = {
+                showLogin = false
+            }
+        )
+    } else {
+        RegisterScreen(
+            onRegisterClick = { username, password, securityQuestion, securityAnswer ->
+                // Handle registration logic here
+                println("Registration attempted with: $username, $password, $securityQuestion, $securityAnswer")
+                showLogin = true // Switch back to login screen after registration
+            },
+            onLoginClick = {
+                showLogin = true
+            }
+        )
     }
 }
