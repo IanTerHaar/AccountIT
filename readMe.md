@@ -1,7 +1,40 @@
-# Introduction
+# AccountIT - Financial Management Android App
 
-Managing personal finances effectively is a challenge faced by many individuals today. The complexity of budgeting, tracking expenses, and making informed financial decisions can often lead to financial mismanagement, which has significant consequences on an individual's financial health. Recognizing this challenge, FTH Accountants seeks to develop a financial management application that can assist their clients in better managing their finances.
+Welcome to the AccountIT project! This is a financial management Android app developed using Kotlin. Follow the instructions below to set up the project on your local machine.
 
-## Purpose of the Application
+## Prerequisites
 
-The purpose of this financial management application is to provide a comprehensive tool that empowers users to take control of their financial lives. By integrating key features such as budgeting tools, spending trackers, and personalized financial insights, the application aims to enhance financial literacy and support users in making informed financial decisions. This application will serve as a valuable resource for FTH Accountants' clients, helping them to monitor their financial health, set and achieve financial goals, and ultimately improve their overall financial well-being
+Make sure you have the following installed on your local machine:
+- **Android Studio** (latest version recommended)
+- **Git** (for version control)
+- **Java Development Kit (JDK)** (version 11 or above)
+
+## Cloning the Repository
+
+1. **Open a terminal or Git Bash on your local machine.**
+2. Navigate to the directory where you want to store the project. For example:
+   ```bash
+   cd path/to/your/directory
+   ```
+3. Clone the repository using the following command:
+   ```bash
+   git clone https://github.com/IanTerHaar/AccountIT.git
+    ```
+4. Navigate into the project directory:
+    ```bash
+    cd AccountIT
+   ```
+   
+## Running the Application
+1. Opening the Project in Android Studio
+   - Open Android Studio.
+   - Click on File > Open....
+   - Navigate to the AccountIT directory that you just cloned and select it.
+   - Click OK to open the project.
+
+2. Setting Up the Environment
+   - Wait for Gradle Sync: Once the project opens, Android Studio will automatically sync the Gradle files. This may take a few minutes depending on your internet speed and computer performance.
+   - SDK Configuration: If prompted, set the path to your Android SDK in local.properties. The local.properties file should look something like this:
+   ```bash
+   sdk.dir=/path/to/your/Android/sdk
+   ```
