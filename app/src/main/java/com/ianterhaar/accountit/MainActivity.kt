@@ -44,7 +44,7 @@ fun AuthScreens(modifier: Modifier = Modifier) {
     } else {
         RegisterScreen(
             onRegisterClick = { username, password, securityQuestion, securityAnswer ->
-                // Handle registration logic here
+                // Handle registration logic here.
                 println("Registration attempted with: $username, $password, $securityQuestion, $securityAnswer")
                 showLogin = true // Switch back to login screen after registration
             },
