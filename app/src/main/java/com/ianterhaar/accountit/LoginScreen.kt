@@ -5,16 +5,19 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
+    navController: NavHostController,
     onLoginClick: (String, String) -> Unit,
-    onRegisterClick: () -> Unit
+    errorMessage: String
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -26,10 +29,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "Login",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Text(text = "Login", style = MaterialTheme.typography.headlineMedium, color = Color(0xFF008080))
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -37,7 +37,6 @@ fun LoginScreen(
             value = username,
             onValueChange = { username = it },
             label = { Text("Username") },
-            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -47,24 +46,25 @@ fun LoginScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
-            singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        // Show error message if login fails
+        if (errorMessage.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = errorMessage, color = Color.Red)
+        }
 
-        Button(
-            onClick = { onLoginClick(username, password) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Login")
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(onClick = { onLoginClick(username, password) }, modifier = Modifier.fillMaxWidth()) {
+            Text("LOGIN")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = onRegisterClick) {
+        TextButton(onClick = { /* Handle register click */ }) {
             Text("Don't have an account? Register")
         }
     }
