@@ -34,21 +34,6 @@ class UserRepository(context: Context) {
         }
     }
 
-    fun registerUser(username: String, password: String, securityQuestion: String, securityAnswer: String): Boolean {
-        val db: SQLiteDatabase = dbHelper.writableDatabase
-        val values = ContentValues().apply {
-            put(DatabaseHelper.COLUMN_USER_NAME, username)
-            put(DatabaseHelper.COLUMN_PASSWORD, password)
-            put(DatabaseHelper.COLUMN_SECURITY_QUESTION, securityQuestion)
-            put(DatabaseHelper.COLUMN_SECURITY_ANSWER, securityAnswer)
-        }
-
-        val newRowId = db.insert(DatabaseHelper.TABLE_USERS, null, values)
-        db.close()
-
-        return newRowId != -1L
-    }
-
     fun loginUser(username: String, password: String): Boolean {
         val db: SQLiteDatabase = dbHelper.readableDatabase
         val query = "SELECT * FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_USER_NAME} = ? AND ${DatabaseHelper.COLUMN_PASSWORD} = ?"
@@ -59,6 +44,42 @@ class UserRepository(context: Context) {
         db.close()
 
         return loggedIn
+    }
+
+    fun registerUser(username: String, password: String, securityQuestion: String, securityAnswer: String): Boolean {
+        val db: SQLiteDatabase = dbHelper.writableDatabase
+        db.beginTransaction()
+        try {
+            // Insert user
+            val userValues = ContentValues().apply {
+                put(DatabaseHelper.COLUMN_USER_NAME, username)
+                put(DatabaseHelper.COLUMN_PASSWORD, password)
+                put(DatabaseHelper.COLUMN_SECURITY_QUESTION, securityQuestion)
+                put(DatabaseHelper.COLUMN_SECURITY_ANSWER, securityAnswer)
+            }
+
+            val userId = db.insert(DatabaseHelper.TABLE_USERS, null, userValues)
+
+            if (userId != -1L) {
+                // Initialize budget record for the new user
+                val budgetValues = ContentValues().apply {
+                    put(DatabaseHelper.COLUMN_USER_ID_FK, userId)
+                    put(DatabaseHelper.COLUMN_TOTAL_BUDGET, 0.0) // Initial budget of 0
+                    put(DatabaseHelper.COLUMN_INCOME, 0.0)      // Initial income of 0
+                }
+
+                val budgetResult = db.insert(DatabaseHelper.TABLE_BUDGETS, null, budgetValues)
+
+                if (budgetResult != -1L) {
+                    db.setTransactionSuccessful()
+                    return true
+                }
+            }
+            return false
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
     }
 
     fun getSecurityQuestion(username: String): String? {
@@ -78,7 +99,6 @@ class UserRepository(context: Context) {
 
     fun verifySecurityAnswer(username: String, securityAnswer: String): UserCredentials? {
         val db: SQLiteDatabase = dbHelper.readableDatabase
-        // Using LOWER() SQL function to make comparison case-insensitive
         val query = "SELECT ${DatabaseHelper.COLUMN_USER_NAME}, ${DatabaseHelper.COLUMN_PASSWORD} FROM ${DatabaseHelper.TABLE_USERS} " +
                 "WHERE ${DatabaseHelper.COLUMN_USER_NAME} = ? AND LOWER(${DatabaseHelper.COLUMN_SECURITY_ANSWER}) = LOWER(?)"
         val cursor = db.rawQuery(query, arrayOf(username, securityAnswer))

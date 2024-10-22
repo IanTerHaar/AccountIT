@@ -8,34 +8,42 @@ import com.ianterhaar.accountit.data.DatabaseHelper.Companion.TABLE_CATEGORIES
 class BudgetTrackingRepository(context: Context) {
     private val dbHelper = DatabaseHelper(context)
 
-    // Retrieve total budget for a specific user
+    private fun ensureBudgetExists(userId: Int) {
+        val db = dbHelper.writableDatabase
+        val cursor = db.query(
+            DatabaseHelper.TABLE_BUDGETS,
+            null,
+            "${DatabaseHelper.COLUMN_USER_ID_FK} = ?",
+            arrayOf(userId.toString()),
+            null,
+            null,
+            null
+        )
+
+        if (!cursor.moveToFirst()) {
+            // Create initial budget record if it doesn't exist
+            val values = ContentValues().apply {
+                put(DatabaseHelper.COLUMN_USER_ID_FK, userId)
+                put(DatabaseHelper.COLUMN_TOTAL_BUDGET, 0.0)
+                put(DatabaseHelper.COLUMN_INCOME, 0.0)
+            }
+            db.insert(DatabaseHelper.TABLE_BUDGETS, null, values)
+        }
+        cursor.close()
+    }
+
+    // Update your existing methods to call ensureBudgetExists
     fun getTotalBudget(userId: Int): Double {
+        ensureBudgetExists(userId)
         val db = dbHelper.readableDatabase
         val cursor = db.rawQuery(
-            "SELECT ${DatabaseHelper.COLUMN_TOTAL_BUDGET} FROM ${DatabaseHelper.TABLE_BUDGETS} WHERE user_id = ?",
+            "SELECT ${DatabaseHelper.COLUMN_TOTAL_BUDGET} FROM ${DatabaseHelper.TABLE_BUDGETS} WHERE ${DatabaseHelper.COLUMN_USER_ID_FK} = ?",
             arrayOf(userId.toString())
         )
         return if (cursor.moveToFirst()) {
             val totalBudget = cursor.getDouble(0)
             cursor.close()
             totalBudget
-        } else {
-            cursor.close()
-            0.0
-        }
-    }
-
-    // Retrieve income for a specific user
-    fun getIncome(userId: Int): Double {
-        val db = dbHelper.readableDatabase
-        val cursor = db.rawQuery(
-            "SELECT ${DatabaseHelper.COLUMN_INCOME} FROM ${DatabaseHelper.TABLE_BUDGETS} WHERE user_id = ?",
-            arrayOf(userId.toString())
-        )
-        return if (cursor.moveToFirst()) {
-            val income = cursor.getDouble(0)
-            cursor.close()
-            income
         } else {
             cursor.close()
             0.0
@@ -103,6 +111,22 @@ class BudgetTrackingRepository(context: Context) {
             "DELETE FROM ${DatabaseHelper.TABLE_CATEGORIES} WHERE ${DatabaseHelper.COLUMN_CATEGORY_NAME} = ? AND user_id = ?",
             arrayOf(name, userId)
         )
+    }
+
+    fun getIncome(userId: Int): Double {
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT ${DatabaseHelper.COLUMN_INCOME} FROM ${DatabaseHelper.TABLE_BUDGETS} WHERE user_id = ?",
+            arrayOf(userId.toString())
+        )
+        return if (cursor.moveToFirst()) {
+            val income = cursor.getDouble(0)
+            cursor.close()
+            income
+        } else {
+            cursor.close()
+            0.0
+        }
     }
 }
 

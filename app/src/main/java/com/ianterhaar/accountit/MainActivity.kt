@@ -15,6 +15,11 @@ import com.ianterhaar.accountit.data.UserRepository
 import com.ianterhaar.accountit.ui.theme.AccountItTheme
 import com.ianterhaar.accountit.ui.auth.LoginScreen
 import com.ianterhaar.accountit.ui.auth.RegisterScreen
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     private lateinit var userRepository: UserRepository
@@ -33,11 +38,38 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class UserState(
+    val isLoggedIn: Boolean = false,
+    val userId: Int = -1,
+    val username: String = ""
+)
+
+////////saving tracker screen//////////
+@Composable
+fun SavingsTrackingScreen(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Savings Tracking Feature\nComing Soon!",
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+////////////////////////////
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(userRepository: UserRepository, budgetTrackingRepository: BudgetTrackingRepository) {
     var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
     var selectedTab by remember { mutableIntStateOf(0) }
+    var userState by remember { mutableStateOf(UserState()) }
 
     Scaffold(
         topBar = {
@@ -46,13 +78,13 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     TopAppBar(
                         title = { Text("AccountIT", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color(0xFF008080), // Teal
+                            containerColor = Color(0xFF008080),
                             titleContentColor = Color.White
                         )
                     )
                     TabRow(
                         selectedTabIndex = selectedTab,
-                        containerColor = Color(0xFF008080), // Teal
+                        containerColor = Color(0xFF008080),
                         contentColor = Color.White
                     ) {
                         Tab(
@@ -75,22 +107,33 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                 0 -> LoginScreen(
                     userRepository = userRepository,
                     onLoginClick = { username, password ->
-                        currentScreen = 2 // Navigate to dashboard
+                        val userId = userRepository.authenticateUser(username, password)
+                        if (userId != -1) {
+                            userState = UserState(
+                                isLoggedIn = true,
+                                userId = userId,
+                                username = username
+                            )
+                            currentScreen = 2
+                        }
                     },
                     onRegisterClick = { currentScreen = 1 }
                 )
                 1 -> RegisterScreen(
                     onRegisterClick = { username, password, securityQuestion, securityAnswer ->
                         if (userRepository.registerUser(username, password, securityQuestion, securityAnswer)) {
-                            currentScreen = 0 // Navigate back to login screen if registration successful
+                            currentScreen = 0
                         }
                     },
-                    onLoginClick = { currentScreen = 0 } // Navigate back to login screen
+                    onLoginClick = { currentScreen = 0 }
                 )
                 2 -> {
                     when (selectedTab) {
-                        0 -> BudgetTrackingScreen(budgetTrackingRepository)
-                        1 -> SavingsTrackingScreen()
+                        0 -> BudgetTrackingScreen(
+                            budgetTrackingRepository = budgetTrackingRepository,
+                            userId = userState.userId
+                        )
+                       1 -> SavingsTrackingScreen()
                     }
                 }
             }
@@ -99,16 +142,19 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
 }
 
 @Composable
-fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
+fun BudgetTrackingScreen(
+    budgetTrackingRepository: BudgetTrackingRepository,
+    userId: Int
+) {
     var totalBudget by remember { mutableStateOf(0.0) }
     var income by remember { mutableStateOf(0.0) }
     var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
 
     // Load data from the database when the screen is first composed
     LaunchedEffect(Unit) {
-        totalBudget = budgetTrackingRepository.getTotalBudget()
-        income = budgetTrackingRepository.getIncome()
-        categories = budgetTrackingRepository.getCategories()
+        totalBudget = budgetTrackingRepository.getTotalBudget(userId)
+        income = budgetTrackingRepository.getIncome(userId)
+        categories = budgetTrackingRepository.getCategories(userId)
     }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }
@@ -130,7 +176,7 @@ fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
         SetBudgetDialog(
             onDismiss = { showSetBudgetDialog = false },
             onSetBudget = { newBudget ->
-                budgetTrackingRepository.updateBudget(newBudget)
+                budgetTrackingRepository.updateBudget(userId, newBudget)
                 totalBudget = newBudget
                 showSetBudgetDialog = false
             }
@@ -141,7 +187,7 @@ fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
         AddIncomeDialog(
             onDismiss = { showAddIncomeDialog = false },
             onAddIncome = { newIncome ->
-                budgetTrackingRepository.addIncome(newIncome)
+                budgetTrackingRepository.addIncome(userId, newIncome)
                 income += newIncome
                 showAddIncomeDialog = false
             }
@@ -153,7 +199,7 @@ fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
             categories = categories,
             onDismiss = { showAddExpenseDialog = false },
             onAddExpense = { category, amount ->
-                budgetTrackingRepository.addExpense(category, amount)
+                budgetTrackingRepository.addExpense(userId, category, amount)
                 categories = categories.map {
                     if (it.name == category) it.copy(spent = it.spent + amount)
                     else it
@@ -168,19 +214,13 @@ fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
             categories = categories,
             onDismiss = { showManageCategoriesDialog = false },
             onAddCategory = { name, budget ->
-                budgetTrackingRepository.addCategory(name, budget)
+                budgetTrackingRepository.addCategory(userId, name, budget)
                 categories = categories + BudgetCategory(name, budget, 0.0)
             },
             onDeleteCategory = { name ->
-                budgetTrackingRepository.deleteCategory(name)
+                budgetTrackingRepository.deleteCategory(userId, name)
                 categories = categories.filter { it.name != name }
             }
         )
     }
-}
-
-@Composable
-fun SavingsTrackingScreen() {
-    // TODO: Implement Savings Tracking Screen
-    Text("Savings Tracking - Coming Soon")
 }
