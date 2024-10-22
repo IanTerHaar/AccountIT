@@ -10,17 +10,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import com.ianterhaar.accountit.data.UserRepository
 import com.ianterhaar.accountit.ui.theme.AccountItTheme
 import com.ianterhaar.accountit.ui.auth.LoginScreen
 import com.ianterhaar.accountit.ui.auth.RegisterScreen
 
 class MainActivity : ComponentActivity() {
+    private lateinit var userRepository: UserRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        userRepository = UserRepository(this)
         setContent {
             AccountItTheme {
-                MainContent()
+                MainContent(userRepository)
             }
         }
     }
@@ -28,7 +32,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent() {
+fun MainContent(userRepository: UserRepository) {
     var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -66,18 +70,17 @@ fun MainContent() {
         Box(modifier = Modifier.padding(innerPadding)) {
             when (currentScreen) {
                 0 -> LoginScreen(
+                    userRepository = userRepository,
                     onLoginClick = { username, password ->
-                        // Handle login logic here
-                        println("Login attempted with: $username, $password")
                         currentScreen = 2 // Navigate to dashboard
                     },
-                    onRegisterClick = { currentScreen = 1 } // Navigate to register screen
+                    onRegisterClick = { currentScreen = 1 }
                 )
                 1 -> RegisterScreen(
                     onRegisterClick = { username, password, securityQuestion, securityAnswer ->
-                        // Handle registration logic here
-                        println("Registration attempted with: $username, $password, $securityQuestion, $securityAnswer")
-                        currentScreen = 0 // Navigate back to login screen
+                        if (userRepository.registerUser(username, password, securityQuestion, securityAnswer)) {
+                            currentScreen = 0 // Navigate back to login screen if registration successful
+                        }
                     },
                     onLoginClick = { currentScreen = 0 } // Navigate back to login screen
                 )
