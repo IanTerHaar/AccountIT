@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     private lateinit var userRepository: UserRepository
@@ -43,6 +44,15 @@ data class UserState(
     val userId: Int = -1,
     val username: String = ""
 )
+
+fun getGreeting(): String {
+    val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    return when {
+        currentHour in 0..11 -> "Good morning"
+        currentHour in 12..17 -> "Good afternoon"
+        else -> "Good evening"
+    }
+}
 
 ////////saving tracker screen//////////
 @Composable
@@ -76,7 +86,21 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
             if (currentScreen == 2) {
                 Column {
                     TopAppBar(
-                        title = { Text("AccountIT", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        title = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                if (userState.isLoggedIn) {
+                                    Text(
+                                        text = "${getGreeting()}, ${userState.username}",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF008080),
                             titleContentColor = Color.White
