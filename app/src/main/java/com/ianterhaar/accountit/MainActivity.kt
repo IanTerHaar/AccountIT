@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import com.ianterhaar.accountit.data.BudgetTrackingRepository
 import com.ianterhaar.accountit.data.UserRepository
 import com.ianterhaar.accountit.ui.theme.AccountItTheme
 import com.ianterhaar.accountit.ui.auth.LoginScreen
@@ -17,14 +18,16 @@ import com.ianterhaar.accountit.ui.auth.RegisterScreen
 
 class MainActivity : ComponentActivity() {
     private lateinit var userRepository: UserRepository
+    private lateinit var budgetTrackingRepository: BudgetTrackingRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         userRepository = UserRepository(this)
+        budgetTrackingRepository = BudgetTrackingRepository(this)
         setContent {
             AccountItTheme {
-                MainContent(userRepository)
+                MainContent(userRepository, budgetTrackingRepository)
             }
         }
     }
@@ -32,7 +35,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainContent(userRepository: UserRepository) {
+fun MainContent(userRepository: UserRepository, budgetTrackingRepository: BudgetTrackingRepository) {
     var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -86,7 +89,7 @@ fun MainContent(userRepository: UserRepository) {
                 )
                 2 -> {
                     when (selectedTab) {
-                        0 -> BudgetTrackingScreen()
+                        0 -> BudgetTrackingScreen(budgetTrackingRepository)
                         1 -> SavingsTrackingScreen()
                     }
                 }
@@ -96,17 +99,17 @@ fun MainContent(userRepository: UserRepository) {
 }
 
 @Composable
-fun BudgetTrackingScreen() {
-    var totalBudget by remember { mutableDoubleStateOf(3000.0) }
-    var income by remember { mutableDoubleStateOf(3500.0) }
-    var categories by remember { mutableStateOf(
-        listOf(
-            BudgetCategory("Food", 900.0, 400.0),
-            BudgetCategory("Rent", 1200.0, 1200.0),
-            BudgetCategory("Utilities", 450.0, 200.0),
-            BudgetCategory("Entertainment", 450.0, 100.0)
-        )
-    ) }
+fun BudgetTrackingScreen(budgetTrackingRepository: BudgetTrackingRepository) {
+    var totalBudget by remember { mutableStateOf(0.0) }
+    var income by remember { mutableStateOf(0.0) }
+    var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
+
+    // Load data from the database when the screen is first composed
+    LaunchedEffect(Unit) {
+        totalBudget = budgetTrackingRepository.getTotalBudget()
+        income = budgetTrackingRepository.getIncome()
+        categories = budgetTrackingRepository.getCategories()
+    }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }
     var showAddIncomeDialog by remember { mutableStateOf(false) }
@@ -127,6 +130,7 @@ fun BudgetTrackingScreen() {
         SetBudgetDialog(
             onDismiss = { showSetBudgetDialog = false },
             onSetBudget = { newBudget ->
+                budgetTrackingRepository.updateBudget(newBudget)
                 totalBudget = newBudget
                 showSetBudgetDialog = false
             }
@@ -137,6 +141,7 @@ fun BudgetTrackingScreen() {
         AddIncomeDialog(
             onDismiss = { showAddIncomeDialog = false },
             onAddIncome = { newIncome ->
+                budgetTrackingRepository.addIncome(newIncome)
                 income += newIncome
                 showAddIncomeDialog = false
             }
@@ -148,6 +153,7 @@ fun BudgetTrackingScreen() {
             categories = categories,
             onDismiss = { showAddExpenseDialog = false },
             onAddExpense = { category, amount ->
+                budgetTrackingRepository.addExpense(category, amount)
                 categories = categories.map {
                     if (it.name == category) it.copy(spent = it.spent + amount)
                     else it
@@ -162,9 +168,11 @@ fun BudgetTrackingScreen() {
             categories = categories,
             onDismiss = { showManageCategoriesDialog = false },
             onAddCategory = { name, budget ->
+                budgetTrackingRepository.addCategory(name, budget)
                 categories = categories + BudgetCategory(name, budget, 0.0)
             },
             onDeleteCategory = { name ->
+                budgetTrackingRepository.deleteCategory(name)
                 categories = categories.filter { it.name != name }
             }
         )

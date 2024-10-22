@@ -12,6 +12,28 @@ data class UserCredentials(
 class UserRepository(context: Context) {
     private val dbHelper = DatabaseHelper(context)
 
+    fun authenticateUser(username: String, password: String): Int {
+        val db = dbHelper.readableDatabase
+        val cursor = db.query(
+            DatabaseHelper.TABLE_USERS,
+            arrayOf(DatabaseHelper.COLUMN_USER_ID),
+            "${DatabaseHelper.COLUMN_USER_NAME} = ? AND ${DatabaseHelper.COLUMN_PASSWORD} = ?",
+            arrayOf(username, password),
+            null,
+            null,
+            null
+        )
+
+        return if (cursor.moveToFirst()) {
+            val userId = cursor.getInt(0)
+            cursor.close()
+            userId
+        } else {
+            cursor.close()
+            -1
+        }
+    }
+
     fun registerUser(username: String, password: String, securityQuestion: String, securityAnswer: String): Boolean {
         val db: SQLiteDatabase = dbHelper.writableDatabase
         val values = ContentValues().apply {
