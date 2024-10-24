@@ -157,7 +157,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                             budgetTrackingRepository = budgetTrackingRepository,
                             userId = userState.userId
                         )
-                       1 -> SavingsTrackingScreen()
+                        1 -> SavingsTrackingScreen()
                     }
                 }
             }
