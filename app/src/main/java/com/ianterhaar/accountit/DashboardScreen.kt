@@ -1,4 +1,3 @@
-
 package com.ianterhaar.accountit
 
 import androidx.compose.foundation.layout.*
@@ -16,6 +15,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 
 val TealColor = Color(0xFF008080)
 val OrangeColor = Color(0xFFFF8C00)
@@ -67,12 +92,13 @@ fun DashboardScreen(
 
             // Pie Chart placeholder
             Card(
-                modifier = Modifier.fillMaxWidth().height(200.dp),
-                colors = CardDefaults.cardColors(containerColor = TealColor)
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("Pie Chart Placeholder", color = Color.White)
-                }
+                BudgetPieChartWithLegend(
+                    categories = categories,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -401,6 +427,129 @@ fun ManageCategoriesDialog(
             }
         }
     )
+}
+
+@Composable
+fun BudgetPieChart(
+    categories: List<BudgetCategory>,
+    modifier: Modifier = Modifier
+) {
+    val categoriesWithSpending = categories.filter { it.spent > 0 }
+    val totalSpent = categoriesWithSpending.sumOf { it.spent }
+
+    Box(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) {
+            val canvasWidth = size.width
+            val canvasHeight = size.height
+            val radius = minOf(canvasWidth, canvasHeight) / 2f
+            val center = Offset(canvasWidth / 2f, canvasHeight / 2f)
+
+            if (categoriesWithSpending.isEmpty()) {
+                // Draw empty state circle
+                drawCircle(
+                    color = Color.LightGray.copy(alpha = 0.3f),
+                    radius = radius,
+                    center = center
+                )
+            } else {
+                var startAngle = -90f // Start from top
+                categoriesWithSpending.forEach { category ->
+                    val sweepAngle = (category.spent / totalSpent * 360f)
+                    val color = when (category.name.lowercase()) {
+                        "food" -> TealColor
+                        "petrol" -> OrangeColor
+                        else -> Color(0xFF2C7873)
+                    }
+
+                    drawArc(
+                        color = color,
+                        startAngle = startAngle,
+                        sweepAngle = sweepAngle.toFloat(), // Cast to Float here
+                        useCenter = true,
+                        size = Size(radius * 2, radius * 2),
+                        topLeft = Offset(center.x - radius, center.y - radius)
+                    )
+
+                    startAngle += sweepAngle.toFloat()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BudgetPieChartWithLegend(
+    categories: List<BudgetCategory>,
+    modifier: Modifier = Modifier
+) {
+    val categoriesWithSpending = categories.filter { it.spent > 0 }
+
+    Column(modifier = modifier) {
+        BudgetPieChart(
+            categories = categoriesWithSpending,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        )
+
+        if (categoriesWithSpending.isEmpty()) {
+            Text(
+                "No expenses recorded",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp),
+                color = Color.Gray
+            )
+        } else {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Legend
+            categoriesWithSpending.forEach { category ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .padding(2.dp)
+                        ) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawCircle(
+                                    color = when (category.name.lowercase()) {              // Moet n better maneer kry om collers te asine
+                                        "food" -> TealColor
+                                        "petrol" -> OrangeColor
+                                        else -> Color(0xFF2C7873)
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = category.name,
+                            color = TealColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Text(
+                        text = "R${String.format("%.2f", category.spent)}",
+                        color = TealColor
+                    )
+                }
+            }
+        }
+    }
 }
 
 data class BudgetCategory(
