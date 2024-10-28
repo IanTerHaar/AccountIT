@@ -54,7 +54,6 @@ fun getGreeting(): String {
     }
 }
 
-////////saving tracker screen//////////
 @Composable
 fun SavingsTrackingScreen(
     modifier: Modifier = Modifier
@@ -71,8 +70,6 @@ fun SavingsTrackingScreen(
         )
     }
 }
-
-////////////////////////////
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,7 +190,18 @@ fun BudgetTrackingScreen(
         onAddIncomeClick = { showAddIncomeDialog = true },
         onAddExpenseClick = { showAddExpenseDialog = true },
         onSetBudgetClick = { showSetBudgetDialog = true },
-        onManageCategoriesClick = { showManageCategoriesDialog = true }
+        onManageCategoriesClick = { showManageCategoriesDialog = true },
+        onDeleteCategory = { categoryName ->
+            budgetTrackingRepository.deleteCategory(userId, categoryName)
+            categories = categories.filter { it.name != categoryName }
+        },
+        onAddExpense = { category, amount ->
+            budgetTrackingRepository.addExpense(userId, category, amount)
+            categories = categories.map {
+                if (it.name == category) it.copy(spent = it.spent + amount)
+                else it
+            }
+        }
     )
 
     if (showSetBudgetDialog) {
@@ -202,48 +210,32 @@ fun BudgetTrackingScreen(
             onSetBudget = { newBudget ->
                 budgetTrackingRepository.updateBudget(userId, newBudget)
                 totalBudget = newBudget
-                showSetBudgetDialog = false
             }
         )
     }
 
     if (showAddIncomeDialog) {
-        AddIncomeDialog(
+        ManageIncomeDialog(
+            currentIncome = income,
             onDismiss = { showAddIncomeDialog = false },
             onAddIncome = { newIncome ->
                 budgetTrackingRepository.addIncome(userId, newIncome)
                 income += newIncome
+            },
+            onResetIncome = {
+                budgetTrackingRepository.resetIncome(userId)
+                income = 0.0
                 showAddIncomeDialog = false
-            }
-        )
-    }
-
-    if (showAddExpenseDialog) {
-        AddExpenseDialog(
-            categories = categories,
-            onDismiss = { showAddExpenseDialog = false },
-            onAddExpense = { category, amount ->
-                budgetTrackingRepository.addExpense(userId, category, amount)
-                categories = categories.map {
-                    if (it.name == category) it.copy(spent = it.spent + amount)
-                    else it
-                }
-                showAddExpenseDialog = false
             }
         )
     }
 
     if (showManageCategoriesDialog) {
         ManageCategoriesDialog(
-            categories = categories,
             onDismiss = { showManageCategoriesDialog = false },
             onAddCategory = { name, budget ->
                 budgetTrackingRepository.addCategory(userId, name, budget)
                 categories = categories + BudgetCategory(name, budget, 0.0)
-            },
-            onDeleteCategory = { name ->
-                budgetTrackingRepository.deleteCategory(userId, name)
-                categories = categories.filter { it.name != name }
             }
         )
     }
