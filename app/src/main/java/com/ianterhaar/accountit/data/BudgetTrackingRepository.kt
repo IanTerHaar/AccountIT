@@ -86,6 +86,14 @@ class BudgetTrackingRepository(context: Context) {
         )
     }
 
+    fun resetIncome(userId: Int) {
+        val db = dbHelper.writableDatabase
+        db.execSQL(
+            "UPDATE ${DatabaseHelper.TABLE_BUDGETS} SET ${DatabaseHelper.COLUMN_INCOME} = 0.0 WHERE user_id = ?",
+            arrayOf(userId.toString())
+        )
+    }
+
     // Add expense to a category for a specific user
     fun addExpense(userId: Int, category: String, expense: Double) {
         val db = dbHelper.writableDatabase

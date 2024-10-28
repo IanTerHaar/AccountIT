@@ -1,5 +1,6 @@
 package com.ianterhaar.accountit
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Canvas
@@ -41,9 +43,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+
 
 val TealColor = Color(0xFF008080)
 val OrangeColor = Color(0xFFFF8C00)
+val BlueColor = Color(0xFF1E90FF)    // Dodger Blue
+val CardBorder = BorderStroke(1.dp, Color.Black)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,41 +61,74 @@ fun DashboardScreen(
     onAddIncomeClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
     onSetBudgetClick: () -> Unit,
-    onManageCategoriesClick: () -> Unit
+    onManageCategoriesClick: () -> Unit,
+    onDeleteCategory: (String) -> Unit,
+    onAddExpense: (String, Double) -> Unit
 ) {
     val remainingBudget = totalBudget - categories.sumOf { it.spent }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var showExpenseDialog by remember { mutableStateOf(false) }
+    var categoryToDelete by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
-            // Budget Overview
+            // Budget Overview with improved spacing and text sizes
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = TealColor)
+                colors = CardDefaults.cardColors(containerColor = TealColor),
+                border = CardBorder
+
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Total Budget: R$totalBudget", fontWeight = FontWeight.Bold, color = Color.White)
-                    Text("Total Income: R$income", color = Color.White)
-                    Text("Remaining: R$remainingBudget",
-                        color = if (remainingBudget < 0) OrangeColor else Color.White)
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        "Total Remaining: R$remainingBudget",
+                        fontSize = 23.sp,
+                        color = if (remainingBudget < 0) OrangeColor else Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Total Budget: R$totalBudget",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        "Total Income: R$income",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Action Buttons
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Button(onClick = onSetBudgetClick, colors = ButtonDefaults.buttonColors(containerColor = TealColor)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onSetBudgetClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeColor),
+                    modifier = Modifier.weight(1f),
+                ) {
                     Text("Set Budget")
                 }
-                Button(onClick = onAddIncomeClick, colors = ButtonDefaults.buttonColors(containerColor = OrangeColor)) {
-                    Text("Add Income")
-                }
-                Button(onClick = onAddExpenseClick, colors = ButtonDefaults.buttonColors(containerColor = OrangeColor)) {
-                    Text("Add Expense")
+                Button(
+                    onClick = onAddIncomeClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = BlueColor),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Manage Income")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Pie Chart placeholder
             Card(
@@ -101,41 +141,195 @@ fun DashboardScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Category Management
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Budget Categories", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TealColor)
-                Button(onClick = onManageCategoriesClick, colors = ButtonDefaults.buttonColors(containerColor = TealColor)) {
-                    Text("Manage Categories")
+            Spacer(modifier = Modifier.height(24.dp))
+            // Category Management Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),  // Added vertical padding
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Budget Categories",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TealColor,
+                    modifier = Modifier.padding(end = 16.dp)  // Added end padding to text
+                )
+                Button(
+                    onClick = onManageCategoriesClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = TealColor),
+                    modifier = Modifier.padding(start = 8.dp)  // Added start padding to button
+                ) {
+                    Text("Add Category")
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))  // Increased space after the header
         }
 
         items(categories) { category ->
-            CategoryItem(category)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        selectedCategory = category.name
+                        showExpenseDialog = true
+                    },
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = CardBorder
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            category.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = TealColor
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Allocated: R${category.allocated}",
+                            color = TealColor,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            "Spent: R${category.spent}",
+                            color = OrangeColor,
+                            fontSize = 16.sp
+                        )
+                        val remaining = category.allocated - category.spent
+                        Text(
+                            "Remaining: R$remaining",
+                            color = if (remaining < 0) Color.Red else TealColor,
+                            fontSize = 16.sp
+                        )
+                    }
+                    IconButton(
+                        onClick = { categoryToDelete = category.name }  // Instead of direct delete
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete category",
+                            tint = OrangeColor
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
-}
 
-@Composable
-fun CategoryItem(category: BudgetCategory) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(category.name, fontWeight = FontWeight.Bold, color = TealColor)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Allocated: R${category.allocated}", color = TealColor)
-            Text("Spent: R${category.spent}", color = OrangeColor)
-            val remaining = category.allocated - category.spent
-            Text("Remaining: R$remaining",
-                color = if (remaining < 0) Color.Red else TealColor)
-        }
+    // Quick Add Expense Dialog when category is clicked
+    if (showExpenseDialog && selectedCategory != null) {
+        var expenseAmount by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = {
+                showExpenseDialog = false
+                selectedCategory = null
+            },
+            title = {
+                Text(
+                    "Add Expense to ${selectedCategory}",
+                    fontWeight = FontWeight.Bold,
+                    color = TealColor
+                )
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = expenseAmount,
+                        onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) expenseAmount = it },
+                        label = { Text("Amount") },
+                        prefix = { Text("R ") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TealColor,
+                            focusedLabelColor = TealColor,
+                            cursorColor = TealColor
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        expenseAmount.toDoubleOrNull()?.let { amount ->
+                            selectedCategory?.let { category ->
+                                onAddExpense(category, amount)
+                            }
+                        }
+                        showExpenseDialog = false
+                        selectedCategory = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TealColor)
+                ) {
+                    Text("Add Expense")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showExpenseDialog = false
+                        selectedCategory = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = OrangeColor)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    // DELETE CONFIRMATION CHANGES - Add confirmation dialog
+    if (categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            containerColor = Color.White,
+            titleContentColor = TealColor,
+            title = {
+                Text(
+                    "Delete Category",
+                    fontWeight = FontWeight.Bold,
+                    color = TealColor
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete the category '$categoryToDelete'?",
+                    color = Color.Black,
+                    fontSize = 16.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        categoryToDelete?.let { onDeleteCategory(it) }
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { categoryToDelete = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TealColor)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -189,9 +383,11 @@ fun SetBudgetDialog(
 }
 
 @Composable
-fun AddIncomeDialog(
+fun ManageIncomeDialog(
+    currentIncome: Double,
     onDismiss: () -> Unit,
-    onAddIncome: (Double) -> Unit
+    onAddIncome: (Double) -> Unit,
+    onResetIncome: () -> Unit
 ) {
     var incomeInput by remember { mutableStateOf("") }
 
@@ -199,21 +395,38 @@ fun AddIncomeDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
         titleContentColor = TealColor,
-        title = { Text("Add Income", fontWeight = FontWeight.Bold) },
+        title = { Text("Manage Income", fontWeight = FontWeight.Bold) },
         text = {
-            OutlinedTextField(
-                value = incomeInput,
-                onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) incomeInput = it },
-                label = { Text("Income Amount") },
-                prefix = { Text("R ") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TealColor,
-                    focusedLabelColor = TealColor,
-                    cursorColor = TealColor
+            Column {
+                Text(
+                    "Current Total Income: R$currentIncome",
+                    fontSize = 18.sp,
+                    color = TealColor,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
-            )
+                OutlinedTextField(
+                    value = incomeInput,
+                    onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) incomeInput = it },
+                    label = { Text("Add Income Amount") },
+                    prefix = { Text("R ") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = TealColor,
+                        focusedLabelColor = TealColor,
+                        cursorColor = TealColor
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onResetIncome,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset Income to 0")
+                }
+            }
         },
         confirmButton = {
             Button(
@@ -239,99 +452,9 @@ fun AddIncomeDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddExpenseDialog(
-    categories: List<BudgetCategory>,
-    onDismiss: () -> Unit,
-    onAddExpense: (String, Double) -> Unit
-) {
-    var selectedCategory by remember { mutableStateOf(categories.firstOrNull()?.name ?: "") }
-    var expenseAmount by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = TealColor,
-        title = { Text("Add Expense", fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCategory,
-                        onValueChange = { },
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = TealColor,
-                            focusedLabelColor = TealColor
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name, color = TealColor) },
-                                onClick = {
-                                    selectedCategory = category.name
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = expenseAmount,
-                    onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) expenseAmount = it },
-                    label = { Text("Expense Amount") },
-                    prefix = { Text("R ") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TealColor,
-                        focusedLabelColor = TealColor,
-                        cursorColor = TealColor
-                    )
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    expenseAmount.toDoubleOrNull()?.let { onAddExpense(selectedCategory, it) }
-                    onDismiss()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = OrangeColor)
-            ) {
-                Text("Add Expense")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = TealColor)
-            ) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun ManageCategoriesDialog(
-    categories: List<BudgetCategory>,
     onDismiss: () -> Unit,
-    onAddCategory: (String, Double) -> Unit,
-    onDeleteCategory: (String) -> Unit
+    onAddCategory: (String, Double) -> Unit
 ) {
     var newCategoryName by remember { mutableStateOf("") }
     var newCategoryBudget by remember { mutableStateOf("") }
@@ -340,40 +463,9 @@ fun ManageCategoriesDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
         titleContentColor = TealColor,
-        title = { Text("Manage Categories", fontWeight = FontWeight.Bold) },
+        title = { Text("Add New Category", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                // List existing categories
-                categories.forEach { category ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(category.name, color = TealColor, fontWeight = FontWeight.Medium)
-                            Text("R ${String.format("%.2f", category.allocated)}", color = TealColor)
-                            IconButton(
-                                onClick = { onDeleteCategory(category.name) }
-                            ) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = OrangeColor)
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Add New Category", color = TealColor, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Add new category
                 OutlinedTextField(
                     value = newCategoryName,
                     onValueChange = { newCategoryName = it },
@@ -401,29 +493,28 @@ fun ManageCategoriesDialog(
                         cursorColor = TealColor
                     )
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        newCategoryBudget.toDoubleOrNull()?.let {
-                            onAddCategory(newCategoryName, it)
-                            newCategoryName = ""
-                            newCategoryBudget = ""
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = TealColor),
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = newCategoryName.isNotBlank() && newCategoryBudget.isNotBlank()
-                ) {
-                    Text("Add Category")
-                }
             }
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TealColor)
+                onClick = {
+                    newCategoryBudget.toDoubleOrNull()?.let {
+                        onAddCategory(newCategoryName, it)
+                        onDismiss()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TealColor),
+                enabled = newCategoryName.isNotBlank() && newCategoryBudget.isNotBlank()
             ) {
-                Text("Done")
+                Text("Add Category")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = OrangeColor)
+            ) {
+                Text("Cancel")
             }
         }
     )
