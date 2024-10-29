@@ -50,24 +50,6 @@ class BudgetTrackingRepository(context: Context) {
         }
     }
 
-    // Retrieve categories for a specific user
-    fun getCategories(userId: Int): List<BudgetCategory> {
-        val db = dbHelper.readableDatabase
-        val categories = mutableListOf<BudgetCategory>()
-        val cursor = db.rawQuery(
-            "SELECT ${DatabaseHelper.COLUMN_CATEGORY_NAME}, ${DatabaseHelper.COLUMN_BUDGET_AMOUNT}, ${DatabaseHelper.COLUMN_SPENT_AMOUNT} FROM ${DatabaseHelper.TABLE_CATEGORIES} WHERE user_id = ?",
-            arrayOf(userId.toString())
-        )
-        while (cursor.moveToNext()) {
-            val name = cursor.getString(0)
-            val allocated = cursor.getDouble(1)
-            val spent = cursor.getDouble(2)
-            categories.add(BudgetCategory(name, allocated, spent))
-        }
-        cursor.close()
-        return categories
-    }
-
     // Update total budget for a specific user
     fun updateBudget(userId: Int, newBudget: Double) {
         val db = dbHelper.writableDatabase
@@ -118,6 +100,49 @@ class BudgetTrackingRepository(context: Context) {
         db.execSQL(
             "DELETE FROM ${DatabaseHelper.TABLE_CATEGORIES} WHERE ${DatabaseHelper.COLUMN_CATEGORY_NAME} = ? AND user_id = ?",
             arrayOf(name, userId)
+        )
+    }
+    fun getCategories(userId: Int): List<BudgetCategory> {
+        val db = dbHelper.readableDatabase
+        val categories = mutableListOf<BudgetCategory>()
+        val cursor = db.rawQuery(
+            """
+            SELECT 
+                ${DatabaseHelper.COLUMN_CATEGORY_NAME}, 
+                ${DatabaseHelper.COLUMN_BUDGET_AMOUNT}, 
+                ${DatabaseHelper.COLUMN_SPENT_AMOUNT},
+                ${DatabaseHelper.COLUMN_IS_PINNED}
+            FROM ${DatabaseHelper.TABLE_CATEGORIES} 
+            WHERE user_id = ?
+            ORDER BY ${DatabaseHelper.COLUMN_IS_PINNED} DESC, ${DatabaseHelper.COLUMN_CATEGORY_NAME} ASC
+            """,
+            arrayOf(userId.toString())
+        )
+        while (cursor.moveToNext()) {
+            val name = cursor.getString(0)
+            val allocated = cursor.getDouble(1)
+            val spent = cursor.getDouble(2)
+            val isPinned = cursor.getInt(3) == 1
+            categories.add(BudgetCategory(name, allocated, spent, isPinned))
+        }
+        cursor.close()
+        return categories
+    }
+
+    // Add new function to toggle pin status
+    fun toggleCategoryPin(userId: Int, categoryName: String) {
+        val db = dbHelper.writableDatabase
+        db.execSQL(
+            """
+            UPDATE ${DatabaseHelper.TABLE_CATEGORIES} 
+            SET ${DatabaseHelper.COLUMN_IS_PINNED} = CASE 
+                WHEN ${DatabaseHelper.COLUMN_IS_PINNED} = 1 THEN 0 
+                ELSE 1 
+            END
+            WHERE ${DatabaseHelper.COLUMN_CATEGORY_NAME} = ? 
+            AND user_id = ?
+            """,
+            arrayOf(categoryName, userId)
         )
     }
 

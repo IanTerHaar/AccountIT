@@ -201,6 +201,10 @@ fun BudgetTrackingScreen(
                 if (it.name == category) it.copy(spent = it.spent + amount)
                 else it
             }
+        },  // Added missing comma here
+        onTogglePinCategory = { categoryName ->
+            budgetTrackingRepository.toggleCategoryPin(userId, categoryName)
+            categories = budgetTrackingRepository.getCategories(userId)
         }
     )
 
