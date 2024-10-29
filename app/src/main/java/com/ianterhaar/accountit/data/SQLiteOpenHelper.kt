@@ -81,7 +81,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL("DROP TABLE IF EXISTS $TABLE_CATEGORIES")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_BUDGETS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
-        db.execSQL("ALTER TABLE $TABLE_CATEGORIES ADD COLUMN $COLUMN_IS_PINNED INTEGER NOT NULL DEFAULT 0")
         onCreate(db) // Recreate all tables
     }
 }
