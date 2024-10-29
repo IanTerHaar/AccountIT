@@ -45,12 +45,37 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Star
 
 
 val TealColor = Color(0xFF008080)
 val OrangeColor = Color(0xFFFF8C00)
 val BlueColor = Color(0xFF1E90FF)    // Dodger Blue
 val CardBorder = BorderStroke(1.dp, Color.Black)
+
+// new color list for pie chart
+val pieChartColors = listOf(
+    Color(0xFF008080),  // Teal
+    Color(0xFFFF8C00),  // Orange
+    Color(0xFF1E90FF),  // Blue
+    Color(0xFF9370DB),  // Medium Purple
+    Color(0xFF20B2AA),  // Light Sea Green
+    Color(0xFFDC143C),  // Crimson
+    Color(0xFF4169E1),  // Royal Blue
+    Color(0xFFFA8072),  // Salmon
+    Color(0xFF32CD32),  // Lime Green
+    Color(0xFFFF69B4),  // Hot Pink
+    Color(0xFF4682B4),  // Steel Blue
+    Color(0xFFFFD700),  // Gold
+    Color(0xFF8B4513),  // Saddle Brown
+    Color(0xFF87CEEB),  // Sky Blue
+    Color(0xFFDA70D6),  // Orchid
+    Color(0xFF556B2F),  // Dark Olive Green
+    Color(0xFFFF6347),  // Tomato
+    Color(0xFF6B8E23),  // Olive Drab
+    Color(0xFF7B68EE),  // Medium Slate Blue
+    Color(0xFFCD853F)   // Peru
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +88,8 @@ fun DashboardScreen(
     onSetBudgetClick: () -> Unit,
     onManageCategoriesClick: () -> Unit,
     onDeleteCategory: (String) -> Unit,
-    onAddExpense: (String, Double) -> Unit
+    onAddExpense: (String, Double) -> Unit,
+    onTogglePinCategory: (String) -> Unit,
 ) {
     val remainingBudget = totalBudget - categories.sumOf { it.spent }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
@@ -72,6 +98,18 @@ fun DashboardScreen(
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
+            // Budget Overview Title
+            Text(
+                text = "Budget Overview",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = TealColor,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                textAlign = TextAlign.Center
+            )
+
             // Budget Overview with improved spacing and text sizes
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -85,19 +123,19 @@ fun DashboardScreen(
                 ) {
                     Text(
                         "Total Remaining: R$remainingBudget",
-                        fontSize = 23.sp,
+                        fontSize = 20.sp,
                         color = if (remainingBudget < 0) OrangeColor else Color.White,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         "Total Budget: R$totalBudget",
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
                         "Total Income: R$income",
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -130,15 +168,29 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Pie Chart placeholder
+            // Pie Chart Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = CardBorder  // Added border to match other cards
             ) {
-                BudgetPieChartWithLegend(
-                    categories = categories,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally  // Center align all content
+                ) {
+                    Text(
+                        text = "Budget Spent Allocation Chart",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TealColor,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                    BudgetPieChartWithLegend(
+                        categories = categories,
+                        modifier = Modifier
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -151,7 +203,7 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Budget Categories",
+                    "Categories",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = TealColor,
@@ -213,14 +265,25 @@ fun DashboardScreen(
                             fontSize = 16.sp
                         )
                     }
-                    IconButton(
-                        onClick = { categoryToDelete = category.name }  // Instead of direct delete
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete category",
-                            tint = OrangeColor
-                        )
+                    Row {
+                        IconButton(
+                            onClick = { onTogglePinCategory(category.name) }  // Add this function to your parameters
+                        ) {
+                            Icon(
+                                if (category.isPinned) Icons.Default.Star else Icons.Default.Star,
+                                contentDescription = if (category.isPinned) "Unpin category" else "Pin category",
+                                tint = if (category.isPinned) OrangeColor else Color.Gray
+                            )
+                        }
+                        IconButton(
+                            onClick = { categoryToDelete = category.name }
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete category",
+                                tint = OrangeColor
+                            )
+                        }
                     }
                 }
             }
@@ -550,11 +613,7 @@ fun BudgetPieChart(
                 var startAngle = -90f // Start from top
                 categoriesWithSpending.forEach { category ->
                     val sweepAngle = (category.spent / totalSpent * 360f)
-                    val color = when (category.name.lowercase()) {
-                        "food" -> TealColor
-                        "petrol" -> OrangeColor
-                        else -> Color(0xFF2C7873)
-                    }
+                    val color = pieChartColors[categoriesWithSpending.indexOf(category) % pieChartColors.size]
 
                     drawArc(
                         color = color,
@@ -618,11 +677,7 @@ fun BudgetPieChartWithLegend(
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 drawCircle(
-                                    color = when (category.name.lowercase()) {              // Moet n better maneer kry om collers te asine
-                                        "food" -> TealColor
-                                        "petrol" -> OrangeColor
-                                        else -> Color(0xFF2C7873)
-                                    }
+                                    color = pieChartColors[categoriesWithSpending.indexOf(category) % pieChartColors.size]
                                 )
                             }
                         }
@@ -634,7 +689,8 @@ fun BudgetPieChartWithLegend(
                         )
                     }
                     Text(
-                        text = "R${String.format("%.2f", category.spent)}",
+                        text = "R${String.format("%.2f", category.spent)} " +
+                                "(${String.format("%.1f", (category.spent / categoriesWithSpending.sumOf { it.spent } * 100))}%)",
                         color = TealColor
                     )
                 }
@@ -646,5 +702,6 @@ fun BudgetPieChartWithLegend(
 data class BudgetCategory(
     val name: String,
     val allocated: Double,
-    val spent: Double
+    val spent: Double,
+    val isPinned: Boolean = false
 )
