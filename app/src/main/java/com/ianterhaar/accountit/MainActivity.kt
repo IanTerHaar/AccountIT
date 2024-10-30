@@ -14,6 +14,16 @@ import com.ianterhaar.accountit.data.UserRepository
 import com.ianterhaar.accountit.ui.theme.AccountItTheme
 import com.ianterhaar.accountit.ui.auth.LoginScreen
 import com.ianterhaar.accountit.ui.auth.RegisterScreen
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import com.ianterhaar.accountit.ui.savings.SavingsTrackingScreen
+import androidx.compose.ui.unit.dp
+import java.text.NumberFormat
+import java.util.*
 
 class MainActivity : ComponentActivity() {
     private lateinit var userRepository: UserRepository
@@ -171,8 +181,3 @@ fun BudgetTrackingScreen() {
     }
 }
 
-@Composable
-fun SavingsTrackingScreen() {
-    // TODO: Implement Savings Tracking Screen
-    Text("Savings Tracking - Coming Soon")
-}
