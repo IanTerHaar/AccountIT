@@ -19,7 +19,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         const val DATABASE_NAME = "accountit.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 5
 
         // User Table
         const val TABLE_USERS = "users"
@@ -40,6 +40,23 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_TYPE = "type"
         const val COLUMN_TARGET_AMOUNT = "target_amount"
         const val COLUMN_TARGET_DATE = "target_date"
+      
+        // Budgets Table
+        const val TABLE_BUDGETS = "budgets"
+        const val COLUMN_BUDGET_ID = "id"
+        const val COLUMN_USER_ID_FK = "user_id"  // Foreign key to users table
+        const val COLUMN_TOTAL_BUDGET = "total_budget"
+        const val COLUMN_INCOME = "income"
+
+        // Categories Table
+        const val TABLE_CATEGORIES = "categories"
+        const val COLUMN_CATEGORY_ID = "id"
+        const val COLUMN_CATEGORY_USER_ID_FK = "user_id"  // Foreign key to users table
+        const val COLUMN_CATEGORY_NAME = "name"
+        const val COLUMN_BUDGET_AMOUNT = "budget"  // Total budget for the category
+        const val COLUMN_SPENT_AMOUNT = "spent"    // Amount spent in the category
+        const val COLUMN_IS_PINNED = "is_pinned"
+
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -71,13 +88,44 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         """.trimIndent()
 
         db.execSQL(createUserTable)
+
         db.execSQL(createSavingsTable)
     }
 
+        // Create budgets table
+        val createBudgetsTable = """
+            CREATE TABLE $TABLE_BUDGETS (
+                $COLUMN_BUDGET_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_USER_ID_FK INTEGER NOT NULL,
+                $COLUMN_TOTAL_BUDGET REAL NOT NULL,
+                $COLUMN_INCOME REAL NOT NULL,
+                FOREIGN KEY ($COLUMN_USER_ID_FK) REFERENCES $TABLE_USERS($COLUMN_USER_ID) ON DELETE CASCADE
+            )
+        """
+        db.execSQL(createBudgetsTable)
+
+        // Create categories table
+        val createCategoriesTable = """
+            CREATE TABLE $TABLE_CATEGORIES (
+                $COLUMN_CATEGORY_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_CATEGORY_USER_ID_FK INTEGER NOT NULL,
+                $COLUMN_CATEGORY_NAME TEXT NOT NULL,
+                $COLUMN_BUDGET_AMOUNT REAL NOT NULL,
+                $COLUMN_SPENT_AMOUNT REAL NOT NULL DEFAULT 0,
+                $COLUMN_IS_PINNED INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY ($COLUMN_CATEGORY_USER_ID_FK) REFERENCES $TABLE_USERS($COLUMN_USER_ID) ON DELETE CASCADE
+            )
+        """
+        db.execSQL(createCategoriesTable)
+    }
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Drop all existing tables if they exist
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_CATEGORIES")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_BUDGETS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_SAVINGS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
-        onCreate(db)
+        onCreate(db) // Recreate all tables
     }
 
     fun getUserTotalSavings(userId: Long): Double {
