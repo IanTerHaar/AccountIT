@@ -1,15 +1,17 @@
+//SQLiteOpenHelper.kt
 package com.ianterhaar.accountit.data
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
+
 // Database class to manage SQLite database
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         const val DATABASE_NAME = "accountit.db"
-        const val DATABASE_VERSION = 5
+        const val DATABASE_VERSION = 6
 
         // User Table
         const val TABLE_USERS = "users"
@@ -19,6 +21,18 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_SECURITY_QUESTION = "security_question"
         const val COLUMN_SECURITY_ANSWER = "security_answer"
 
+        // Savings Table
+        const val TABLE_SAVINGS = "savings"
+        const val COLUMN_SAVING_ID = "id"
+        const val COLUMN_SAVING_USER_ID = "user_id"
+        const val COLUMN_AMOUNT = "amount"
+        const val COLUMN_DESCRIPTION = "description"
+        const val COLUMN_CATEGORY = "category"
+        const val COLUMN_DATE = "date"
+        const val COLUMN_TYPE = "type"
+        const val COLUMN_TARGET_AMOUNT = "target_amount"
+        const val COLUMN_TARGET_DATE = "target_date"
+      
         // Budgets Table
         const val TABLE_BUDGETS = "budgets"
         const val COLUMN_BUDGET_ID = "id"
@@ -34,6 +48,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_BUDGET_AMOUNT = "budget"  // Total budget for the category
         const val COLUMN_SPENT_AMOUNT = "spent"    // Amount spent in the category
         const val COLUMN_IS_PINNED = "is_pinned"
+
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -46,10 +61,10 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 $COLUMN_SECURITY_QUESTION TEXT NOT NULL,
                 $COLUMN_SECURITY_ANSWER TEXT NOT NULL
             )
-        """
+        """.trimIndent()
+
         db.execSQL(createUserTable)
 
-        // Create budgets table
         val createBudgetsTable = """
             CREATE TABLE $TABLE_BUDGETS (
                 $COLUMN_BUDGET_ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,17 +89,51 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             )
         """
         db.execSQL(createCategoriesTable)
+
+        // Create savings table
+        val createSavingsTable = """
+            CREATE TABLE $TABLE_SAVINGS (
+                $COLUMN_SAVING_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_SAVING_USER_ID INTEGER NOT NULL,
+                $COLUMN_AMOUNT REAL NOT NULL,
+                $COLUMN_DESCRIPTION TEXT NOT NULL,
+                $COLUMN_CATEGORY TEXT,
+                $COLUMN_DATE TEXT NOT NULL,
+                $COLUMN_TYPE TEXT NOT NULL,
+                $COLUMN_TARGET_AMOUNT REAL,
+                $COLUMN_TARGET_DATE TEXT,
+                FOREIGN KEY($COLUMN_SAVING_USER_ID) REFERENCES $TABLE_USERS($COLUMN_USER_ID)
+            )
+        """.trimIndent()
+
+        db.execSQL(createSavingsTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Drop all existing tables if they exist
         db.execSQL("DROP TABLE IF EXISTS $TABLE_CATEGORIES")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_BUDGETS")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_SAVINGS")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         onCreate(db) // Recreate all tables
     }
+
+    fun getUserTotalSavings(userId: Long): Double {
+        val db = readableDatabase
+        return db.query(
+            TABLE_SAVINGS,
+            arrayOf("SUM($COLUMN_AMOUNT) as total"),
+            "$COLUMN_SAVING_USER_ID = ? AND $COLUMN_TYPE = ?",
+            arrayOf(userId.toString(), "deposit"),
+            null,
+            null,
+            null
+        ).use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getDouble(0)
+            } else {
+                0.0
+            }
+        }
+    }
 }
-
-
-
-
