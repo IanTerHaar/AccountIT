@@ -19,7 +19,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ianterhaar.accountit.SavingsViewModel
 import com.ianterhaar.accountit.SavingsViewModelFactory
 import com.ianterhaar.accountit.models.SavingsGoal
-import com.ianterhaar.accountit.models.SavingsTransaction
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
