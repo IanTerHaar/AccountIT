@@ -16,27 +16,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ianterhaar.accountit.SavingsViewModel
+import com.ianterhaar.accountit.SavingsViewModelFactory
+import com.ianterhaar.accountit.models.SavingsGoal
+import com.ianterhaar.accountit.models.SavingsTransaction
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.runtime.collectAsState
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-
-data class SavingsGoal(
-    val name: String,
-    val targetAmount: Double,
-    val currentAmount: Double,
-    val deadline: String? = null
-)
 
 @Composable
 fun SavingsTrackingScreen(
     viewModel: SavingsViewModel = viewModel(
-        factory = SavingsViewModelFactory(LocalContext.current, /* userId = */ 1L) // Replace with actual user ID
+        factory = SavingsViewModelFactory(LocalContext.current, /* userId = */ 1L)
     )
 ) {
     val totalSavings by viewModel.totalSavings.collectAsState()
@@ -50,7 +41,6 @@ fun SavingsTrackingScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Total Savings Card
         TotalSavingsCard(
             totalSavings = totalSavings,
             onAddSavingsClick = { showAddSavingsDialog = true },
@@ -58,7 +48,6 @@ fun SavingsTrackingScreen(
             onShowHistoryClick = { showTransactionHistory = true }
         )
 
-        // Savings Goals List
         Text(
             text = "Savings Goals",
             style = MaterialTheme.typography.titleMedium,
@@ -78,7 +67,6 @@ fun SavingsTrackingScreen(
         }
     }
 
-    // Dialogs
     if (showAddGoalDialog) {
         AddSavingsGoalDialog(
             onDismiss = { showAddGoalDialog = false },
@@ -109,7 +97,7 @@ fun SavingsTrackingScreen(
 }
 
 @Composable
-fun TotalSavingsCard(
+private fun TotalSavingsCard(
     totalSavings: Double,
     onAddSavingsClick: () -> Unit,
     onAddGoalClick: () -> Unit,
@@ -143,7 +131,7 @@ fun TotalSavingsCard(
                         containerColor = Color(0xFF008080)
                     )
                 ) {
-                    Icon(Icons.Default.ArrowUpward, contentDescription = "Add")
+                    Icon(Icons.Filled.ArrowUpward, contentDescription = "Add")
                     Spacer(Modifier.width(4.dp))
                     Text("Add Savings")
                 }
@@ -153,12 +141,12 @@ fun TotalSavingsCard(
                         containerColor = Color(0xFF008080)
                     )
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "New Goal")
+                    Icon(Icons.Filled.Add, contentDescription = "New Goal")
                     Spacer(Modifier.width(4.dp))
                     Text("New Goal")
                 }
                 IconButton(onClick = onShowHistoryClick) {
-                    Icon(Icons.Default.History, contentDescription = "History")
+                    Icon(Icons.Filled.History, contentDescription = "History")
                 }
             }
         }
@@ -166,7 +154,7 @@ fun TotalSavingsCard(
 }
 
 @Composable
-fun SavingsGoalCard(
+private fun SavingsGoalCard(
     goal: SavingsGoal,
     onAddSavings: (Double) -> Unit
 ) {
@@ -218,7 +206,6 @@ fun SavingsGoalCard(
                 )
             }
 
-            // Time remaining if deadline exists
             goal.deadline?.let { deadline ->
                 val daysRemaining = calculateDaysRemaining(deadline)
                 if (daysRemaining > 0) {
@@ -236,60 +223,7 @@ fun SavingsGoalCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TransactionHistoryDialog(
-    viewModel: SavingsViewModel,
-    onDismiss: () -> Unit
-) {
-    val transactions by viewModel.transactionHistory.collectAsState()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Transaction History") },
-        text = {
-            LazyColumn {
-                items(transactions) { transaction ->
-                    TransactionItem(transaction)
-                    Divider()
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-fun TransactionItem(transaction: SavingsTransaction) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(
-                text = transaction.goalName,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = formatDate(transaction.date),
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-        Text(
-            text = formatCurrency(transaction.amount),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF008080)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AddSavingsGoalDialog(
+private fun AddSavingsGoalDialog(
     onDismiss: () -> Unit,
     onAddGoal: (String, Double, String?) -> Unit
 ) {
@@ -367,7 +301,7 @@ fun AddSavingsGoalDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSavingsDialog(
+private fun AddSavingsDialog(
     goals: List<SavingsGoal>,
     onDismiss: () -> Unit,
     onAddSavings: (String, Double) -> Unit
@@ -450,6 +384,68 @@ fun AddSavingsDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TransactionHistoryDialog(
+    viewModel: SavingsViewModel,
+    onDismiss: () -> Unit
+) {
+    val transactions by viewModel.transactionHistory.collectAsState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Transaction History") },
+        text = {
+            LazyColumn {
+                items(transactions) { transaction ->
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = transaction.goalName,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = formatDate(transaction.date),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            Text(
+                                text = formatCurrency(transaction.amount),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF008080)
+                            )
+                        }
+                        Divider()
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+private fun calculateDaysRemaining(deadline: String): Long {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return try {
+        val deadlineDate = dateFormat.parse(deadline)
+        val today = Date()
+        val diff = deadlineDate?.time?.minus(today.time) ?: 0
+        diff / (1000 * 60 * 60 * 24) // Convert milliseconds to days
+    } catch (e: Exception) {
+        0L
+    }
+}
+
 private fun formatCurrency(amount: Double): String {
     val format = NumberFormat.getCurrencyInstance(Locale("en", "ZA"))
     return format.format(amount)
@@ -466,5 +462,24 @@ private fun formatDate(dateString: String): String {
     }
 }
 
-private fun calculateDaysRemaining(deadline: String): Long {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.get
+// Extension function to help with numeric input validation
+private fun String.isValidAmount(): Boolean {
+    return try {
+        this.toDoubleOrNull()?.let { it > 0 } ?: false
+    } catch (e: NumberFormatException) {
+        false
+    }
+}
+
+// Extension function to help with date validation
+private fun String.isValidDate(): Boolean {
+    return try {
+        if (this.isBlank()) return true // Optional dates are valid
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        format.isLenient = false
+        format.parse(this)
+        true
+    } catch (e: Exception) {
+        false
+    }
+}
