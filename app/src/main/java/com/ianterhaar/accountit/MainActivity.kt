@@ -15,6 +15,7 @@ import com.ianterhaar.accountit.data.UserRepository
 import com.ianterhaar.accountit.ui.theme.AccountItTheme
 import com.ianterhaar.accountit.ui.auth.LoginScreen
 import com.ianterhaar.accountit.ui.auth.RegisterScreen
+import com.ianterhaar.accountit.ui.savings.SavingsTrackingScreen
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
