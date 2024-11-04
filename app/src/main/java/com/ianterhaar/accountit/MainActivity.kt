@@ -2,11 +2,13 @@ package com.ianterhaar.accountit
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -77,10 +79,20 @@ fun SavingsTrackingScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(userRepository: UserRepository, budgetTrackingRepository: BudgetTrackingRepository) {
-    var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
+    var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard, 3: settings
     var selectedTab by remember { mutableIntStateOf(0) }
     var userState by remember { mutableStateOf(UserState()) }
     var showProfileMenu by remember { mutableStateOf(false) }
+
+    /*
+    * This if statement allows for when you are on the settings tab to press the back button on
+    * you phone navigation to return to the dashboard screen again.
+    */
+    if (currentScreen == 3) {
+        BackHandler {
+            currentScreen = 2
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -126,7 +138,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                                 DropdownMenuItem(
                                     text = { Text("Settings") },
                                     onClick = {
-                                        // Handle settings
+                                        currentScreen = 3
                                         showProfileMenu = false
                                     }
                                 )
@@ -199,6 +211,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                         1 -> SavingsTrackingScreen()
                     }
                 }
+                3 -> SettingsScreen()
             }
         }
     }
@@ -284,5 +297,40 @@ fun BudgetTrackingScreen(
                 categories = categories + BudgetCategory(name, budget, 0.0)
             }
         )
+    }
+}
+
+@Composable
+fun SettingsScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                modifier = Modifier.size(64.dp),
+                tint = Color(0xFF008080)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Settings Coming Soon!",
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF008080)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "We're working on making your experience even better.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = Color.Gray
+            )
+        }
     }
 }
