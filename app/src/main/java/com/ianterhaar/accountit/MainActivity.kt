@@ -299,38 +299,3 @@ fun BudgetTrackingScreen(
         )
     }
 }
-
-@Composable
-fun SettingsScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                modifier = Modifier.size(64.dp),
-                tint = Color(0xFF008080)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Settings Coming Soon!",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF008080)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "We're working on making your experience even better.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = Color.Gray
-            )
-        }
-    }
-}
