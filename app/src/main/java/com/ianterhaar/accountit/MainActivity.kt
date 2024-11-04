@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -78,6 +80,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
     var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
     var selectedTab by remember { mutableIntStateOf(0) }
     var userState by remember { mutableStateOf(UserState()) }
+    var showProfileMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -86,7 +89,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     TopAppBar(
                         title = {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(0.85f), // Reduced width to make room for profile button
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 if (userState.isLoggedIn) {
@@ -97,6 +100,44 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                                         color = Color.White
                                     )
                                 }
+                            }
+                        },
+                        actions = {
+                            // Profile Button
+                            IconButton(onClick = { showProfileMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    tint = Color.White
+                                )
+                            }
+                            // Profile Dropdown Menu
+                            DropdownMenu(
+                                expanded = showProfileMenu,
+                                onDismissRequest = { showProfileMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit Profile") },
+                                    onClick = {
+                                        // Handle edit profile
+                                        showProfileMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Settings") },
+                                    onClick = {
+                                        // Handle settings
+                                        showProfileMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Logout") },
+                                    onClick = {
+                                        userState = UserState()
+                                        currentScreen = 0
+                                        showProfileMenu = false
+                                    }
+                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
