@@ -23,15 +23,53 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
 
     fun addSavingsAmount(userId: Long, goalName: String, amount: Double) {
         val db = dbHelper.writableDatabase
-        val values = ContentValues().apply {
-            put(DatabaseHelper.COLUMN_SAVING_USER_ID, userId)
-            put(DatabaseHelper.COLUMN_AMOUNT, amount)
-            put(DatabaseHelper.COLUMN_DESCRIPTION, goalName)
-            put(DatabaseHelper.COLUMN_TYPE, "deposit")
-            put(DatabaseHelper.COLUMN_DATE, Date().toString())
+
+        // Retrieve the existing amount for the goal
+        val existingAmountCursor = db.query(
+            DatabaseHelper.TABLE_SAVINGS,
+            arrayOf(DatabaseHelper.COLUMN_AMOUNT),
+            "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_DESCRIPTION} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
+            arrayOf(userId.toString(), goalName, "goal"),
+            null,
+            null,
+            null
+        )
+
+        var existingAmount = 0.0
+        existingAmountCursor.use { cursor ->
+            if (cursor.moveToFirst()) {
+                existingAmount = cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_AMOUNT))
+            }
         }
-        db.insert(DatabaseHelper.TABLE_SAVINGS, null, values)
+
+        // Increment the amount
+        val newAmount = existingAmount + amount
+
+        // Update the record
+        val updateValues = ContentValues().apply {
+            put(DatabaseHelper.COLUMN_AMOUNT, newAmount)
+        }
+
+        val rowsAffected = db.update(
+            DatabaseHelper.TABLE_SAVINGS,
+            updateValues,
+            "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_DESCRIPTION} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
+            arrayOf(userId.toString(), goalName, "goal")
+        )
+
+        // If no existing record, insert a new one
+        if (rowsAffected == 0) {
+            val values = ContentValues().apply {
+                put(DatabaseHelper.COLUMN_SAVING_USER_ID, userId)
+                put(DatabaseHelper.COLUMN_AMOUNT, amount) // Use the new amount as there's no existing record
+                put(DatabaseHelper.COLUMN_DESCRIPTION, goalName)
+                put(DatabaseHelper.COLUMN_TYPE, "goal")
+                put(DatabaseHelper.COLUMN_DATE, Date().toString())
+            }
+            db.insert(DatabaseHelper.TABLE_SAVINGS, null, values)
+        }
     }
+
 
     fun getSavingsGoals(userId: Long): List<SavingsGoal> {
         val db = dbHelper.readableDatabase
@@ -61,7 +99,7 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
                 DatabaseHelper.TABLE_SAVINGS,
                 arrayOf("SUM(${DatabaseHelper.COLUMN_AMOUNT}) as total"),
                 "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_DESCRIPTION} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
-                arrayOf(userId.toString(), goalName, "deposit"),
+                arrayOf(userId.toString(), goalName, "goal"),
                 null,
                 null,
                 null
@@ -84,7 +122,7 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
             DatabaseHelper.TABLE_SAVINGS,
             arrayOf("SUM(${DatabaseHelper.COLUMN_AMOUNT}) as total"),
             "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
-            arrayOf(userId.toString(), "deposit"),
+            arrayOf(userId.toString(),"goal"),
             null,
             null,
             null
@@ -103,7 +141,7 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
             DatabaseHelper.TABLE_SAVINGS,
             null,
             "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
-            arrayOf(userId.toString(), "deposit"),
+            arrayOf(userId.toString(), "goal"),
             null,
             null,
             "${DatabaseHelper.COLUMN_DATE} DESC"

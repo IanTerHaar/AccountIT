@@ -22,9 +22,6 @@ import com.ianterhaar.accountit.ui.auth.RegisterScreen
 import com.ianterhaar.accountit.ui.savings.SavingsTrackingScreen
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
@@ -56,23 +53,6 @@ fun getGreeting(): String {
         currentHour in 0..11 -> "Good morning"
         currentHour in 12..17 -> "Good afternoon"
         else -> "Good evening"
-    }
-}
-
-@Composable
-fun SavingsTrackingScreen(
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Savings Tracking Feature\nComing Soon!",
-            textAlign = TextAlign.Center
-        )
     }
 }
 
@@ -208,7 +188,9 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                             budgetTrackingRepository = budgetTrackingRepository,
                             userId = userState.userId
                         )
-                        1 -> SavingsTrackingScreen()
+                        1 -> SavingsTrackingScreen(
+                            userId = userState.userId.toLong()
+                        )
                     }
                 }
                 3 -> SettingsScreen()
