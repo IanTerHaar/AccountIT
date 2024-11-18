@@ -11,7 +11,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         const val DATABASE_NAME = "accountit.db"
-        const val DATABASE_VERSION = 6
+        const val DATABASE_VERSION = 7
 
         // User Table
         const val TABLE_USERS = "users"
@@ -117,23 +117,5 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
         onCreate(db) // Recreate all tables
     }
-
-    fun getUserTotalSavings(userId: Long): Double {
-        val db = readableDatabase
-        return db.query(
-            TABLE_SAVINGS,
-            arrayOf("SUM($COLUMN_AMOUNT) as total"),
-            "$COLUMN_SAVING_USER_ID = ? AND $COLUMN_TYPE = ?",
-            arrayOf(userId.toString(), "deposit"),
-            null,
-            null,
-            null
-        ).use { cursor ->
-            if (cursor.moveToFirst()) {
-                cursor.getDouble(0)
-            } else {
-                0.0
-            }
-        }
-    }
+    
 }

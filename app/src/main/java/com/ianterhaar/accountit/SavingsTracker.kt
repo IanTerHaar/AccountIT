@@ -25,8 +25,9 @@ import java.util.*
 
 @Composable
 fun SavingsTrackingScreen(
+    userId : Long,
     viewModel: SavingsViewModel = viewModel(
-        factory = SavingsViewModelFactory(LocalContext.current, /* userId = */ 1L)
+        factory = SavingsViewModelFactory(LocalContext.current, userId)
     )
 ) {
     val totalSavings by viewModel.totalSavings.collectAsState()
