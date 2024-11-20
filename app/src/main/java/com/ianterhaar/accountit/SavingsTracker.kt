@@ -22,6 +22,15 @@ import com.ianterhaar.accountit.models.SavingsGoal
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Remove
+private val tealColor = Color(0xFF008080)
+private val orangeColor = Color(0xFFFF5722)
 
 @Composable
 fun SavingsTrackingScreen(
@@ -106,47 +115,97 @@ private fun TotalSavingsCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = 16.dp),
+        border = BorderStroke(1.dp, Color.LightGray)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Total Savings",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = formatCurrency(totalSavings),
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF008080)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // History icon in top right
+            IconButton(
+                onClick = onShowHistoryClick,
+                modifier = Modifier.align(Alignment.TopEnd)
             ) {
-                Button(
-                    onClick = onAddSavingsClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF008080)
-                    )
+                Icon(
+                    Icons.Filled.History,
+                    contentDescription = "History",
+                    tint = tealColor
+                )
+            }
+
+            // Main content
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Total Savings",
+                    style = MaterialTheme.typography.headlineMedium, // Changed from titleMedium to headlineMedium
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = formatCurrency(totalSavings),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = tealColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Buttons row with more spacing and height
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp), // Reduced horizontal padding to allow more button width
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(Icons.Filled.ArrowUpward, contentDescription = "Add")
-                    Spacer(Modifier.width(4.dp))
-                    Text("Add Savings")
-                }
-                Button(
-                    onClick = onAddGoalClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF008080)
-                    )
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "New Goal")
-                    Spacer(Modifier.width(4.dp))
-                    Text("New Goal")
-                }
-                IconButton(onClick = onShowHistoryClick) {
-                    Icon(Icons.Filled.History, contentDescription = "History")
+                    Button(
+                        onClick = onAddSavingsClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(60.dp), // Increased from 48.dp to 56.dp
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = tealColor
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
+                        )
+                    ) {
+                        Icon(
+                            Icons.Filled.ArrowUpward,
+                            contentDescription = "Add",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Add Savings",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Button(
+                        onClick = onAddGoalClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp), // Increased from 48.dp to 56.dp
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = orangeColor
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
+                        )
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = "New Goal",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "New Goal",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -159,7 +218,8 @@ private fun SavingsGoalCard(
     onAddSavings: (Double) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, Color.LightGray)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -187,7 +247,7 @@ private fun SavingsGoalCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = Color(0xFF008080)
+                color = tealColor
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -221,7 +281,6 @@ private fun SavingsGoalCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddSavingsGoalDialog(
     onDismiss: () -> Unit,
@@ -231,49 +290,98 @@ private fun AddSavingsGoalDialog(
     var targetAmount by remember { mutableStateOf("") }
     var deadline by remember { mutableStateOf("") }
     var showErrors by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // Add these date-related state variables
+    val calendar = Calendar.getInstance()
+    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
+    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
+    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Savings Goal") },
+        containerColor = Color.White,
+        titleContentColor = tealColor,
+        title = { Text("Add New Savings Goal", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                TextField(
+                OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Goal Name") },
                     isError = showErrors && name.isBlank(),
-                    modifier = Modifier.fillMaxWidth()
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = tealColor,
+                        focusedLabelColor = tealColor,
+                        cursorColor = tealColor,
+                        errorBorderColor = orangeColor,
+                        errorLabelColor = orangeColor
+                    )
                 )
                 if (showErrors && name.isBlank()) {
                     Text(
                         text = "Name is required",
-                        color = MaterialTheme.colorScheme.error,
+                        color = orangeColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-                TextField(
+                OutlinedTextField(
                     value = targetAmount,
-                    onValueChange = { targetAmount = it },
+                    onValueChange = {
+                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                            targetAmount = it
+                        }
+                    },
                     label = { Text("Target Amount") },
+                    prefix = { Text("R ") },
                     isError = showErrors && (targetAmount.toDoubleOrNull() ?: 0.0) <= 0,
-                    modifier = Modifier.fillMaxWidth()
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = tealColor,
+                        focusedLabelColor = tealColor,
+                        cursorColor = tealColor,
+                        errorBorderColor = orangeColor,
+                        errorLabelColor = orangeColor
+                    )
                 )
                 if (showErrors && (targetAmount.toDoubleOrNull() ?: 0.0) <= 0) {
                     Text(
                         text = "Valid amount is required",
-                        color = MaterialTheme.colorScheme.error,
+                        color = orangeColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = deadline,
-                    onValueChange = { deadline = it },
-                    label = { Text("Deadline (YYYY-MM-DD, optional)") },
-                    modifier = Modifier.fillMaxWidth()
+                OutlinedTextField(
+                    value = if (deadline.isNotEmpty()) formatDate(deadline) else "",
+                    onValueChange = { },
+                    label = { Text("Deadline (Optional)") },
+                    singleLine = true,
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(
+                                Icons.Default.DateRange,
+                                contentDescription = "Select date",
+                                tint = tealColor
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = tealColor,
+                        focusedLabelColor = tealColor,
+                        cursorColor = tealColor
+                    )
                 )
             }
         },
@@ -286,19 +394,184 @@ private fun AddSavingsGoalDialog(
                         val deadlineValue = deadline.takeIf { it.isNotBlank() }
                         onAddGoal(name, amount, deadlineValue)
                     }
-                }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = tealColor),
+                enabled = name.isNotBlank() && targetAmount.isNotBlank()
             ) {
                 Text("Add Goal")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = orangeColor)
+            ) {
                 Text("Cancel")
+            }
+        }
+    )
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismiss = { showDatePicker = false },
+            onDateSelected = { date ->
+                deadline = date
+            }
+        )
+    }
+}
+
+@Composable
+private fun DatePickerDialog(
+    onDismiss: () -> Unit,
+    onDateSelected: (String) -> Unit
+) {
+    val calendar = Calendar.getInstance()
+    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
+    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH) + 1) }
+    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        title = {
+            Text(
+                "Select Deadline",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                    modifier = Modifier.padding(vertical = 16.dp)
+                ) {
+                    // Year Picker
+                    NumberPickerRow(
+                        label = "Year",
+                        value = selectedYear,
+                        onValueChange = { selectedYear = it },
+                        range = (calendar.get(Calendar.YEAR))..(calendar.get(Calendar.YEAR) + 10)
+                    )
+
+                    // Month Picker
+                    NumberPickerRow(
+                        label = "Month",
+                        value = selectedMonth,
+                        onValueChange = { selectedMonth = it },
+                        range = 1..12,
+                        displayTransform = { getMonthName(it) }
+                    )
+
+                    // Day Picker
+                    NumberPickerRow(
+                        label = "Day",
+                        value = selectedDay,
+                        onValueChange = { selectedDay = it },
+                        range = 1..getDaysInMonth(selectedYear, selectedMonth)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val date = String.format("%04d-%02d-%02d", selectedYear, selectedMonth, selectedDay)
+                    onDateSelected(date)
+                    onDismiss()
+                }
+            ) {
+                Text("OK", color = tealColor)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = orangeColor)
             }
         }
     )
 }
 
+@Composable
+private fun NumberPickerRow(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    range: IntRange,
+    displayTransform: (Int) -> String = { it.toString() }
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(200.dp)  // Fixed width for consistent centering
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconButton(
+                onClick = {
+                    if (value > range.first) onValueChange(value - 1)
+                }
+            ) {
+                Icon(Icons.Filled.Remove, "Decrease", tint = tealColor)
+            }
+
+            Text(
+                text = displayTransform(value),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.widthIn(min = 100.dp),
+                textAlign = TextAlign.Center
+            )
+
+            IconButton(
+                onClick = {
+                    if (value < range.last) onValueChange(value + 1)
+                }
+            ) {
+                Icon(Icons.Filled.Add, "Increase", tint = tealColor)
+            }
+        }
+    }
+}
+
+private fun getMonthName(month: Int): String {
+    return when (month) {
+        1 -> "January"
+        2 -> "February"
+        3 -> "March"
+        4 -> "April"
+        5 -> "May"
+        6 -> "June"
+        7 -> "July"
+        8 -> "August"
+        9 -> "September"
+        10 -> "October"
+        11 -> "November"
+        12 -> "December"
+        else -> ""
+    }
+}
+
+private fun getDaysInMonth(year: Int, month: Int): Int {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.YEAR, year)
+    calendar.set(Calendar.MONTH, month - 1)
+    return calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddSavingsDialog(
@@ -313,14 +586,16 @@ private fun AddSavingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Savings") },
+        containerColor = Color.White,
+        titleContentColor = tealColor,
+        title = { Text("Add Savings", fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded }
                 ) {
-                    TextField(
+                    OutlinedTextField(
                         value = selectedGoal,
                         onValueChange = { },
                         readOnly = true,
@@ -328,7 +603,12 @@ private fun AddSavingsDialog(
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth(),
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = tealColor,
+                            focusedLabelColor = tealColor,
+                            cursorColor = tealColor
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -347,17 +627,31 @@ private fun AddSavingsDialog(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-                TextField(
+                OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it },
+                    onValueChange = {
+                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                            amount = it
+                        }
+                    },
                     label = { Text("Amount") },
+                    prefix = { Text("R ") },
                     isError = showErrors && (amount.toDoubleOrNull() ?: 0.0) <= 0,
-                    modifier = Modifier.fillMaxWidth()
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = tealColor,
+                        focusedLabelColor = tealColor,
+                        cursorColor = tealColor,
+                        errorBorderColor = orangeColor,
+                        errorLabelColor = orangeColor
+                    )
                 )
                 if (showErrors && (amount.toDoubleOrNull() ?: 0.0) <= 0) {
                     Text(
                         text = "Valid amount is required",
-                        color = MaterialTheme.colorScheme.error,
+                        color = orangeColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -371,13 +665,18 @@ private fun AddSavingsDialog(
                     if (savingsAmount > 0 && selectedGoal.isNotBlank()) {
                         onAddSavings(selectedGoal, savingsAmount)
                     }
-                }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = tealColor),
+                enabled = selectedGoal.isNotBlank() && amount.isNotBlank()
             ) {
                 Text("Add")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = orangeColor)
+            ) {
                 Text("Cancel")
             }
         }
@@ -394,7 +693,9 @@ private fun TransactionHistoryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Transaction History") },
+        containerColor = Color.White,
+        titleContentColor = tealColor,
+        title = { Text("Transaction History", fontWeight = FontWeight.Bold) },
         text = {
             LazyColumn {
                 items(transactions) { transaction ->
@@ -408,26 +709,32 @@ private fun TransactionHistoryDialog(
                             Column {
                                 Text(
                                     text = transaction.goalName,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
                                 Text(
                                     text = formatDate(transaction.date),
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
                                 )
                             }
                             Text(
                                 text = formatCurrency(transaction.amount),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF008080)
+                                color = tealColor,
+                                fontWeight = FontWeight.Medium
                             )
                         }
-                        Divider()
+                        Divider(color = Color.LightGray)
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = tealColor)
+            ) {
                 Text("Close")
             }
         }
