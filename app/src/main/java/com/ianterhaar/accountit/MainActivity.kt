@@ -190,6 +190,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                             userId = userState.userId
                         )
                         1 -> SavingsTrackingScreen(
+                            userRepository = userRepository,
                             userId = userState.userId.toLong()
                         )
                     }
@@ -209,14 +210,14 @@ fun BudgetTrackingScreen(
     var totalBudget by remember { mutableStateOf(0.0) }
     var income by remember { mutableStateOf(0.0) }
     var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
-    var currencySymbol by remember { mutableStateOf("$") } // Default symbol
+    var currencySymbol by remember { mutableStateOf("R") } // Default symbol
 
     // Load data from the database when the screen is first composed
     LaunchedEffect(Unit) {
         totalBudget = budgetTrackingRepository.getTotalBudget(userId)
         income = budgetTrackingRepository.getIncome(userId)
         categories = budgetTrackingRepository.getCategories(userId)
-        currencySymbol = userRepository.getCurrency(userId) ?: "$" // Fetch and set the currency symbol
+        currencySymbol = userRepository.getCurrency(userId) ?: "R" // Fetch and set the currency symbol
     }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }
