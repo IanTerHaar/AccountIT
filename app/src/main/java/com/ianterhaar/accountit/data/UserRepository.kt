@@ -115,4 +115,41 @@ class UserRepository(context: Context) {
 
         return credentials
     }
+
+    fun getCurrency(userID: Int): String? {
+        // Mapping of currency codes to symbols
+        val currencySymbols = mapOf(
+            "INR" to "₹",   // India
+            "CNY" to "¥",   // China
+            "USD" to "$",   // United States
+            "IDR" to "Rp",  // Indonesia
+            "PKR" to "₨",   // Pakistan
+            "BRL" to "R$",  // Brazil
+            "NGN" to "₦",   // Nigeria
+            "BDT" to "৳",   // Bangladesh
+            "RUB" to "₽",   // Russia
+            "MXN" to "$",   // Mexico
+            "JPY" to "¥",   // Japan
+            "ETH" to "Br",  // Ethiopia
+            "PHP" to "₱",   // Philippines
+            "EGP" to "£",   // Egypt
+            "ZAR" to "R"    // South Africa
+        )
+
+        val db: SQLiteDatabase = dbHelper.readableDatabase
+        val query = "SELECT ${DatabaseHelper.COLUMN_CURRENCY} FROM ${DatabaseHelper.TABLE_USERS} " +
+                "WHERE ${DatabaseHelper.COLUMN_USER_ID} = ?"
+        val cursor = db.rawQuery(query, arrayOf(userID.toString()))
+
+        var currencySymbol: String? = null
+        if (cursor.moveToFirst()) {
+            val currencyCode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CURRENCY))
+            currencySymbol = currencySymbols[currencyCode] // Get the symbol from the map
+        }
+        cursor.close()
+        db.close()
+
+        return currencySymbol
+    }
+
 }

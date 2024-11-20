@@ -83,6 +83,7 @@ fun DashboardScreen(
     totalBudget: Double,
     income: Double,
     categories: List<BudgetCategory>,
+    currencySymbol: String,
     onAddIncomeClick: () -> Unit,
     onAddExpenseClick: () -> Unit,
     onSetBudgetClick: () -> Unit,
@@ -95,6 +96,8 @@ fun DashboardScreen(
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showExpenseDialog by remember { mutableStateOf(false) }
     var categoryToDelete by remember { mutableStateOf<String?>(null) }
+
+
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
@@ -122,19 +125,19 @@ fun DashboardScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        "Total Remaining: R$remainingBudget",
+                        "Total Remaining: $currencySymbol$remainingBudget",
                         fontSize = 20.sp,
                         color = if (remainingBudget < 0) OrangeColor else Color.White,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Total Budget: R$totalBudget",
+                        "Total Budget: $currencySymbol$totalBudget",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        "Total Income: R$income",
+                        "Total Income: $currencySymbol$income",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -188,6 +191,7 @@ fun DashboardScreen(
                     )
                     BudgetPieChartWithLegend(
                         categories = categories,
+                        currencySymbol = currencySymbol,
                         modifier = Modifier
                     )
                 }
@@ -249,18 +253,18 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Allocated: R${category.allocated}",
+                            "Allocated: $currencySymbol${category.allocated}",
                             color = TealColor,
                             fontSize = 16.sp
                         )
                         Text(
-                            "Spent: R${category.spent}",
+                            "Spent: $currencySymbol${category.spent}",
                             color = OrangeColor,
                             fontSize = 16.sp
                         )
                         val remaining = category.allocated - category.spent
                         Text(
-                            "Remaining: R$remaining",
+                            "Remaining: $currencySymbol$remaining",
                             color = if (remaining < 0) Color.Red else TealColor,
                             fontSize = 16.sp
                         )
@@ -313,7 +317,7 @@ fun DashboardScreen(
                         value = expenseAmount,
                         onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) expenseAmount = it },
                         label = { Text("Amount") },
-                        prefix = { Text("R ") },
+                        prefix = { Text("$currencySymbol ") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -398,6 +402,7 @@ fun DashboardScreen(
 
 @Composable
 fun SetBudgetDialog(
+    currencySymbol: String,
     onDismiss: () -> Unit,
     onSetBudget: (Double) -> Unit
 ) {
@@ -413,7 +418,7 @@ fun SetBudgetDialog(
                 value = budgetInput,
                 onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) budgetInput = it },
                 label = { Text("Budget Amount") },
-                prefix = { Text("R ") },
+                prefix = { Text("$currencySymbol ") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -447,6 +452,7 @@ fun SetBudgetDialog(
 
 @Composable
 fun ManageIncomeDialog(
+    currencySymbol: String,
     currentIncome: Double,
     onDismiss: () -> Unit,
     onAddIncome: (Double) -> Unit,
@@ -471,7 +477,7 @@ fun ManageIncomeDialog(
                     value = incomeInput,
                     onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) incomeInput = it },
                     label = { Text("Add Income Amount") },
-                    prefix = { Text("R ") },
+                    prefix = { Text("$currencySymbol ") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -516,6 +522,7 @@ fun ManageIncomeDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManageCategoriesDialog(
+    currencySymbol: String,
     onDismiss: () -> Unit,
     onAddCategory: (String, Double) -> Unit
 ) {
@@ -546,7 +553,7 @@ fun ManageCategoriesDialog(
                     value = newCategoryBudget,
                     onValueChange = { if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) newCategoryBudget = it },
                     label = { Text("Budget Amount") },
-                    prefix = { Text("R ") },
+                    prefix = { Text("$currencySymbol ") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -633,6 +640,7 @@ fun BudgetPieChart(
 
 @Composable
 fun BudgetPieChartWithLegend(
+    currencySymbol: String,
     categories: List<BudgetCategory>,
     modifier: Modifier = Modifier
 ) {
@@ -689,7 +697,7 @@ fun BudgetPieChartWithLegend(
                         )
                     }
                     Text(
-                        text = "R${String.format("%.2f", category.spent)} " +
+                        text = "$currencySymbol${String.format("%.2f", category.spent)} " +
                                 "(${String.format("%.1f", (category.spent / categoriesWithSpending.sumOf { it.spent } * 100))}%)",
                         color = TealColor
                     )

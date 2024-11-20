@@ -186,6 +186,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     when (selectedTab) {
                         0 -> BudgetTrackingScreen(
                             budgetTrackingRepository = budgetTrackingRepository,
+                            userRepository = userRepository,
                             userId = userState.userId
                         )
                         1 -> SavingsTrackingScreen(
@@ -202,17 +203,20 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
 @Composable
 fun BudgetTrackingScreen(
     budgetTrackingRepository: BudgetTrackingRepository,
+    userRepository: UserRepository,
     userId: Int
 ) {
     var totalBudget by remember { mutableStateOf(0.0) }
     var income by remember { mutableStateOf(0.0) }
     var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
+    var currencySymbol by remember { mutableStateOf("$") } // Default symbol
 
     // Load data from the database when the screen is first composed
     LaunchedEffect(Unit) {
         totalBudget = budgetTrackingRepository.getTotalBudget(userId)
         income = budgetTrackingRepository.getIncome(userId)
         categories = budgetTrackingRepository.getCategories(userId)
+        currencySymbol = userRepository.getCurrency(userId) ?: "$" // Fetch and set the currency symbol
     }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }
@@ -224,6 +228,7 @@ fun BudgetTrackingScreen(
         totalBudget = totalBudget,
         income = income,
         categories = categories,
+        currencySymbol = currencySymbol,
         onAddIncomeClick = { showAddIncomeDialog = true },
         onAddExpenseClick = { showAddExpenseDialog = true },
         onSetBudgetClick = { showSetBudgetDialog = true },
@@ -238,7 +243,7 @@ fun BudgetTrackingScreen(
                 if (it.name == category) it.copy(spent = it.spent + amount)
                 else it
             }
-        },  // Added missing comma here
+        },
         onTogglePinCategory = { categoryName ->
             budgetTrackingRepository.toggleCategoryPin(userId, categoryName)
             categories = budgetTrackingRepository.getCategories(userId)
@@ -247,6 +252,7 @@ fun BudgetTrackingScreen(
 
     if (showSetBudgetDialog) {
         SetBudgetDialog(
+            currencySymbol = currencySymbol,
             onDismiss = { showSetBudgetDialog = false },
             onSetBudget = { newBudget ->
                 budgetTrackingRepository.updateBudget(userId, newBudget)
@@ -257,6 +263,7 @@ fun BudgetTrackingScreen(
 
     if (showAddIncomeDialog) {
         ManageIncomeDialog(
+            currencySymbol = currencySymbol,
             currentIncome = income,
             onDismiss = { showAddIncomeDialog = false },
             onAddIncome = { newIncome ->
@@ -273,6 +280,7 @@ fun BudgetTrackingScreen(
 
     if (showManageCategoriesDialog) {
         ManageCategoriesDialog(
+            currencySymbol = currencySymbol,
             onDismiss = { showManageCategoriesDialog = false },
             onAddCategory = { name, budget ->
                 budgetTrackingRepository.addCategory(userId, name, budget)

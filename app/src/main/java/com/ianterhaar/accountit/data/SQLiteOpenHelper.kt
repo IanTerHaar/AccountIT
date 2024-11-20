@@ -11,7 +11,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         const val DATABASE_NAME = "accountit.db"
-        const val DATABASE_VERSION = 7
+        const val DATABASE_VERSION = 8
 
         // User Table
         const val TABLE_USERS = "users"
@@ -20,6 +20,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_PASSWORD = "password"
         const val COLUMN_SECURITY_QUESTION = "security_question"
         const val COLUMN_SECURITY_ANSWER = "security_answer"
+        const val COLUMN_CURRENCY = "currency"
 
         // Savings Table
         const val TABLE_SAVINGS = "savings"
@@ -59,7 +60,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 $COLUMN_USER_NAME TEXT NOT NULL,
                 $COLUMN_PASSWORD TEXT NOT NULL,
                 $COLUMN_SECURITY_QUESTION TEXT NOT NULL,
-                $COLUMN_SECURITY_ANSWER TEXT NOT NULL
+                $COLUMN_SECURITY_ANSWER TEXT NOT NULL,
+                $COLUMN_CURRENCY TEXT NOT NULL DEFAULT "ZAR"
             )
         """.trimIndent()
 
