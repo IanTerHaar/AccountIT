@@ -19,7 +19,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ianterhaar.accountit.SavingsViewModel
 import com.ianterhaar.accountit.SavingsViewModelFactory
 import com.ianterhaar.accountit.models.SavingsGoal
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.BorderStroke
@@ -311,9 +310,6 @@ private fun AddSavingsGoalDialog(
 
     // Add these date-related state variables
     val calendar = Calendar.getInstance()
-    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
-    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -771,11 +767,6 @@ private fun calculateDaysRemaining(deadline: String): Long {
         0L
     }
 }
-
-//private fun formatCurrency(amount: Double): String {
-//    val format = NumberFormat.getCurrencyInstance(Locale("en", "ZA"))
-//    return format.format(amount)
-//}
 
 private fun formatDate(dateString: String): String {
     val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
