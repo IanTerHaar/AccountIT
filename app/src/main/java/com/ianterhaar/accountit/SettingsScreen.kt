@@ -14,29 +14,33 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
+import com.ianterhaar.accountit.data.UserRepository
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    userId: Int,
+    userRepository: UserRepository
+) {
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var selectedCurrency by remember { mutableStateOf("ZAR") }
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(userId) {
+        val currencyFromDb = userRepository.getCurrencyCode(userId) ?: "ZAR"
+        selectedCurrency = currencyFromDb
+    }
+
     val currencySymbols = mapOf(
-        "INR" to "₹",        // India
-        "CNY" to "¥",        // China
         "USD" to "$",        // United States
-        "IDR" to "Rp",       // Indonesia
-        "PKR" to "₨",       // Pakistan
-        "BRL" to "R$",       // Brazil
-        "NGN" to "₦",        // Nigeria
-        "BDT" to "৳",        // Bangladesh
-        "RUB" to "₽",        // Russia
-        "MXN" to "$",        // Mexico
+        "EUR" to "€",        // European Union
+        "GBP" to "£",        // United Kingdom
         "JPY" to "¥",        // Japan
-        "ETH" to "Br",       // Ethiopia
-        "PHP" to "₱",        // Philippines
-        "EGP" to "£",        // Egypt
+        "CAD" to "$",        // Canada
+        "AUD" to "$",        // Australia
+        "CHF" to "Fr",       // Switzerland
+        "CNY" to "¥",        // China
+        "KRW" to "₩",        // South Korea
         "ZAR" to "R"         // South Africa
     )
 
@@ -137,6 +141,7 @@ fun SettingsScreen() {
                                     .fillMaxWidth()
                                     .clickable {
                                         selectedCurrency = currencyCode
+                                        userRepository.updateCurrency(userId, currencyCode)
                                         showCurrencyDialog = false
                                     }
                                     .padding(vertical = 8.dp),

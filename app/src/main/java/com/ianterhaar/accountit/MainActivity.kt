@@ -195,7 +195,10 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                         )
                     }
                 }
-                3 -> SettingsScreen()
+                3 -> SettingsScreen(
+                    userRepository = userRepository,
+                    userId = userState.userId
+                )
             }
         }
     }
