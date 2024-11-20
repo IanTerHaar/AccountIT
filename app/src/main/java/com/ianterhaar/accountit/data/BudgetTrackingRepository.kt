@@ -3,7 +3,6 @@ package com.ianterhaar.accountit.data
 import android.content.ContentValues
 import android.content.Context
 import com.ianterhaar.accountit.BudgetCategory
-import com.ianterhaar.accountit.data.DatabaseHelper.Companion.TABLE_CATEGORIES
 
 class BudgetTrackingRepository(context: Context) {
     private val dbHelper = DatabaseHelper(context)

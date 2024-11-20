@@ -115,4 +115,67 @@ class UserRepository(context: Context) {
 
         return credentials
     }
+
+    fun getCurrency(userID: Int): String? {
+        // Mapping of currency codes to symbols
+        val currencySymbols = mapOf(
+            "USD" to "$",        // United States
+            "EUR" to "€",        // European Union
+            "GBP" to "£",        // United Kingdom
+            "JPY" to "¥",        // Japan
+            "CAD" to "$",        // Canada
+            "AUD" to "$",        // Australia
+            "CHF" to "Fr",       // Switzerland
+            "CNY" to "¥",        // China
+            "KRW" to "₩",        // South Korea
+            "ZAR" to "R"         // South Africa
+        )
+
+        val db: SQLiteDatabase = dbHelper.readableDatabase
+        val query = "SELECT ${DatabaseHelper.COLUMN_CURRENCY} FROM ${DatabaseHelper.TABLE_USERS} " +
+                "WHERE ${DatabaseHelper.COLUMN_USER_ID} = ?"
+        val cursor = db.rawQuery(query, arrayOf(userID.toString()))
+
+        var currencySymbol: String? = null
+        if (cursor.moveToFirst()) {
+            val currencyCode = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CURRENCY))
+            currencySymbol = currencySymbols[currencyCode] // Get the symbol from the map
+        }
+        cursor.close()
+        db.close()
+
+        return currencySymbol
+    }
+
+    fun updateCurrency(userId: Int, newCurrency: String) {
+        val db = dbHelper.writableDatabase // Correctly access writableDatabase from dbHelper
+        val values = ContentValues().apply {
+            put(DatabaseHelper.COLUMN_CURRENCY, newCurrency) // Use DatabaseHelper to prefix the constant
+        }
+        db.update(
+            DatabaseHelper.TABLE_USERS, // Use DatabaseHelper to prefix the constant
+            values,
+            "${DatabaseHelper.COLUMN_USER_ID} = ?", // Use DatabaseHelper to prefix the constant
+            arrayOf(userId.toString())
+        )
+        db.close() // Always close the database after operations
+    }
+
+    fun getCurrencyCode(userId: Int): String? {
+        val db = dbHelper.readableDatabase
+        val query = "SELECT ${DatabaseHelper.COLUMN_CURRENCY} FROM ${DatabaseHelper.TABLE_USERS} WHERE ${DatabaseHelper.COLUMN_USER_ID} = ?"
+        val cursor = db.rawQuery(query, arrayOf(userId.toString()))
+
+        var currency: String? = null
+        if (cursor.moveToFirst()) {
+            // Retrieve the currency value from the database
+            currency = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_CURRENCY))
+        }
+
+        // Close cursor and database to prevent memory leaks
+        cursor.close()
+        db.close()
+
+        return currency
+    }
 }

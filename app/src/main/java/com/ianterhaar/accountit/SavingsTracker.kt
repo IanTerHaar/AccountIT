@@ -19,7 +19,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ianterhaar.accountit.SavingsViewModel
 import com.ianterhaar.accountit.SavingsViewModelFactory
 import com.ianterhaar.accountit.models.SavingsGoal
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.BorderStroke
@@ -29,21 +28,29 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.Remove
+import com.ianterhaar.accountit.data.UserRepository
+
 private val tealColor = Color(0xFF008080)
 private val orangeColor = Color(0xFFFF5722)
 
 @Composable
 fun SavingsTrackingScreen(
     userId : Long,
+    userRepository: UserRepository,
     viewModel: SavingsViewModel = viewModel(
         factory = SavingsViewModelFactory(LocalContext.current, userId)
     )
+
 ) {
+
     val totalSavings by viewModel.totalSavings.collectAsState()
     val savingsGoals by viewModel.savingsGoals.collectAsState()
     var showAddGoalDialog by remember { mutableStateOf(false) }
     var showAddSavingsDialog by remember { mutableStateOf(false) }
     var showTransactionHistory by remember { mutableStateOf(false) }
+    var currencySymbol by remember { mutableStateOf("R") } // Default symbol
+    currencySymbol = userRepository.getCurrency(userId.toInt()) ?: "R"
+
 
     Column(
         modifier = Modifier
@@ -52,6 +59,7 @@ fun SavingsTrackingScreen(
     ) {
         TotalSavingsCard(
             totalSavings = totalSavings,
+            currencySymbol = currencySymbol,
             onAddSavingsClick = { showAddSavingsDialog = true },
             onAddGoalClick = { showAddGoalDialog = true },
             onShowHistoryClick = { showTransactionHistory = true }
@@ -67,6 +75,7 @@ fun SavingsTrackingScreen(
             items(savingsGoals) { goal ->
                 SavingsGoalCard(
                     goal = goal,
+                    currencySymbol = currencySymbol,
                     onAddSavings = { amount ->
                         viewModel.addSavings(goal.name, amount)
                     }
@@ -78,6 +87,7 @@ fun SavingsTrackingScreen(
 
     if (showAddGoalDialog) {
         AddSavingsGoalDialog(
+            currencySymbol = currencySymbol,
             onDismiss = { showAddGoalDialog = false },
             onAddGoal = { name, target, deadline ->
                 viewModel.addSavingsGoal(name, target, deadline)
@@ -89,6 +99,7 @@ fun SavingsTrackingScreen(
     if (showAddSavingsDialog) {
         AddSavingsDialog(
             goals = savingsGoals,
+            currencySymbol = currencySymbol,
             onDismiss = { showAddSavingsDialog = false },
             onAddSavings = { goalName, amount ->
                 viewModel.addSavings(goalName, amount)
@@ -100,17 +111,20 @@ fun SavingsTrackingScreen(
     if (showTransactionHistory) {
         TransactionHistoryDialog(
             viewModel = viewModel,
+            currencySymbol = currencySymbol,
             onDismiss = { showTransactionHistory = false }
         )
     }
 }
+
 
 @Composable
 private fun TotalSavingsCard(
     totalSavings: Double,
     onAddSavingsClick: () -> Unit,
     onAddGoalClick: () -> Unit,
-    onShowHistoryClick: () -> Unit
+    onShowHistoryClick: () -> Unit,
+    currencySymbol: String
 ) {
     Card(
         modifier = Modifier
@@ -143,7 +157,7 @@ private fun TotalSavingsCard(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = formatCurrency(totalSavings),
+                    text = "$currencySymbol$totalSavings",
                     style = MaterialTheme.typography.headlineLarge,
                     color = tealColor,
                     fontWeight = FontWeight.Bold
@@ -215,7 +229,8 @@ private fun TotalSavingsCard(
 @Composable
 private fun SavingsGoalCard(
     goal: SavingsGoal,
-    onAddSavings: (Double) -> Unit
+    onAddSavings: (Double) -> Unit,
+    currencySymbol: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -257,7 +272,7 @@ private fun SavingsGoalCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)}",
+                    text = "$currencySymbol${goal.currentAmount} of $currencySymbol${goal.targetAmount}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -284,6 +299,7 @@ private fun SavingsGoalCard(
 @Composable
 private fun AddSavingsGoalDialog(
     onDismiss: () -> Unit,
+    currencySymbol: String,
     onAddGoal: (String, Double, String?) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -294,9 +310,6 @@ private fun AddSavingsGoalDialog(
 
     // Add these date-related state variables
     val calendar = Calendar.getInstance()
-    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
-    var selectedDay by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -337,7 +350,7 @@ private fun AddSavingsGoalDialog(
                         }
                     },
                     label = { Text("Target Amount") },
-                    prefix = { Text("R ") },
+                    prefix = { Text("$currencySymbol ") },
                     isError = showErrors && (targetAmount.toDoubleOrNull() ?: 0.0) <= 0,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -576,6 +589,7 @@ private fun getDaysInMonth(year: Int, month: Int): Int {
 @Composable
 private fun AddSavingsDialog(
     goals: List<SavingsGoal>,
+    currencySymbol: String,
     onDismiss: () -> Unit,
     onAddSavings: (String, Double) -> Unit
 ) {
@@ -635,7 +649,7 @@ private fun AddSavingsDialog(
                         }
                     },
                     label = { Text("Amount") },
-                    prefix = { Text("R ") },
+                    prefix = { Text("$currencySymbol ") },
                     isError = showErrors && (amount.toDoubleOrNull() ?: 0.0) <= 0,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -687,7 +701,8 @@ private fun AddSavingsDialog(
 @Composable
 private fun TransactionHistoryDialog(
     viewModel: SavingsViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currencySymbol: String
 ) {
     val transactions by viewModel.transactionHistory.collectAsState()
 
@@ -719,7 +734,7 @@ private fun TransactionHistoryDialog(
                                 )
                             }
                             Text(
-                                text = formatCurrency(transaction.amount),
+                                text = currencySymbol + (transaction.amount),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = tealColor,
                                 fontWeight = FontWeight.Medium
@@ -751,11 +766,6 @@ private fun calculateDaysRemaining(deadline: String): Long {
     } catch (e: Exception) {
         0L
     }
-}
-
-private fun formatCurrency(amount: Double): String {
-    val format = NumberFormat.getCurrencyInstance(Locale("en", "ZA"))
-    return format.format(amount)
 }
 
 private fun formatDate(dateString: String): String {

@@ -2,9 +2,12 @@ package com.ianterhaar.accountit
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -55,9 +58,20 @@ fun getGreeting(): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(userRepository: UserRepository, budgetTrackingRepository: BudgetTrackingRepository) {
-    var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard
+    var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard, 3: settings
     var selectedTab by remember { mutableIntStateOf(0) }
     var userState by remember { mutableStateOf(UserState()) }
+    var showProfileMenu by remember { mutableStateOf(false) }
+
+    /*
+    * This if statement allows for when you are on the settings tab to press the back button on
+    * you phone navigation to return to the dashboard screen again.
+    */
+    if (currentScreen == 3) {
+        BackHandler {
+            currentScreen = 2
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -66,7 +80,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     TopAppBar(
                         title = {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(0.85f), // Reduced width to make room for profile button
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 if (userState.isLoggedIn) {
@@ -77,6 +91,44 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                                         color = Color.White
                                     )
                                 }
+                            }
+                        },
+                        actions = {
+                            // Profile Button
+                            IconButton(onClick = { showProfileMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    tint = Color.White
+                                )
+                            }
+                            // Profile Dropdown Menu
+                            DropdownMenu(
+                                expanded = showProfileMenu,
+                                onDismissRequest = { showProfileMenu = false }
+                            ) {
+//                                DropdownMenuItem(
+//                                    text = { Text("Edit Profile") },
+//                                    onClick = {
+//                                        // Handle edit profile
+//                                        showProfileMenu = false
+//                                    }
+//                                )
+                                DropdownMenuItem(
+                                    text = { Text("Settings") },
+                                    onClick = {
+                                        currentScreen = 3
+                                        showProfileMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Logout") },
+                                    onClick = {
+                                        userState = UserState()
+                                        currentScreen = 0
+                                        showProfileMenu = false
+                                    }
+                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -133,13 +185,19 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     when (selectedTab) {
                         0 -> BudgetTrackingScreen(
                             budgetTrackingRepository = budgetTrackingRepository,
+                            userRepository = userRepository,
                             userId = userState.userId
                         )
                         1 -> SavingsTrackingScreen(
+                            userRepository = userRepository,
                             userId = userState.userId.toLong()
                         )
                     }
                 }
+                3 -> SettingsScreen(
+                    userRepository = userRepository,
+                    userId = userState.userId
+                )
             }
         }
     }
@@ -148,17 +206,20 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
 @Composable
 fun BudgetTrackingScreen(
     budgetTrackingRepository: BudgetTrackingRepository,
+    userRepository: UserRepository,
     userId: Int
 ) {
     var totalBudget by remember { mutableStateOf(0.0) }
     var income by remember { mutableStateOf(0.0) }
     var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
+    var currencySymbol by remember { mutableStateOf("R") } // Default symbol
 
     // Load data from the database when the screen is first composed
     LaunchedEffect(Unit) {
         totalBudget = budgetTrackingRepository.getTotalBudget(userId)
         income = budgetTrackingRepository.getIncome(userId)
         categories = budgetTrackingRepository.getCategories(userId)
+        currencySymbol = userRepository.getCurrency(userId) ?: "R" // Fetch and set the currency symbol
     }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }
@@ -170,6 +231,7 @@ fun BudgetTrackingScreen(
         totalBudget = totalBudget,
         income = income,
         categories = categories,
+        currencySymbol = currencySymbol,
         onAddIncomeClick = { showAddIncomeDialog = true },
         onAddExpenseClick = { showAddExpenseDialog = true },
         onSetBudgetClick = { showSetBudgetDialog = true },
@@ -184,7 +246,7 @@ fun BudgetTrackingScreen(
                 if (it.name == category) it.copy(spent = it.spent + amount)
                 else it
             }
-        },  // Added missing comma here
+        },
         onTogglePinCategory = { categoryName ->
             budgetTrackingRepository.toggleCategoryPin(userId, categoryName)
             categories = budgetTrackingRepository.getCategories(userId)
@@ -193,6 +255,7 @@ fun BudgetTrackingScreen(
 
     if (showSetBudgetDialog) {
         SetBudgetDialog(
+            currencySymbol = currencySymbol,
             onDismiss = { showSetBudgetDialog = false },
             onSetBudget = { newBudget ->
                 budgetTrackingRepository.updateBudget(userId, newBudget)
@@ -203,6 +266,7 @@ fun BudgetTrackingScreen(
 
     if (showAddIncomeDialog) {
         ManageIncomeDialog(
+            currencySymbol = currencySymbol,
             currentIncome = income,
             onDismiss = { showAddIncomeDialog = false },
             onAddIncome = { newIncome ->
@@ -219,6 +283,7 @@ fun BudgetTrackingScreen(
 
     if (showManageCategoriesDialog) {
         ManageCategoriesDialog(
+            currencySymbol = currencySymbol,
             onDismiss = { showManageCategoriesDialog = false },
             onAddCategory = { name, budget ->
                 budgetTrackingRepository.addCategory(userId, name, budget)
