@@ -18,8 +18,27 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsScreen() {
     var isDarkModeEnabled by remember { mutableStateOf(false) }
-    var selectedCurrency by remember { mutableStateOf("USD") }
+    var selectedCurrency by remember { mutableStateOf("ZAR") }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+
+    val currencySymbols = mapOf(
+        "INR" to "₹",        // India
+        "CNY" to "¥",        // China
+        "USD" to "$",        // United States
+        "IDR" to "Rp",       // Indonesia
+        "PKR" to "₨",       // Pakistan
+        "BRL" to "R$",       // Brazil
+        "NGN" to "₦",        // Nigeria
+        "BDT" to "৳",        // Bangladesh
+        "RUB" to "₽",        // Russia
+        "MXN" to "$",        // Mexico
+        "JPY" to "¥",        // Japan
+        "ETH" to "Br",       // Ethiopia
+        "PHP" to "₱",        // Philippines
+        "EGP" to "£",        // Egypt
+        "ZAR" to "R"         // South Africa
+    )
 
     Column(
         modifier = Modifier
@@ -56,7 +75,7 @@ fun SettingsScreen() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* TODO: Open currency selection dialog */ }
+                .clickable { showCurrencyDialog = true }
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -105,6 +124,41 @@ fun SettingsScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
+        // Currency Dialog
+        if (showCurrencyDialog) {
+            AlertDialog(
+                onDismissRequest = { showCurrencyDialog = false },
+                title = { Text("Select Currency") },
+                text = {
+                    Column {
+                        currencySymbols.keys.forEach { currencyCode ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedCurrency = currencyCode
+                                        showCurrencyDialog = false
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(currencyCode, modifier = Modifier.weight(1f))
+                                Text(currencySymbols[currencyCode] ?: "")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showCurrencyDialog = false }
+                    ) {
+                        Text("Close")
+                    }
+                }
+            )
+        }
+
+        // About Dialog
         if (showAboutDialog) {
             AlertDialog(
                 onDismissRequest = { showAboutDialog = false },
@@ -151,13 +205,16 @@ fun SettingsScreen() {
                         },
                         style = MaterialTheme.typography.bodyLarge,
                         onClick = { offset ->
-                            clickableText(offset, listOf(
-                                "Ian" to "https://github.com/IanTerHaar",
-                                "Hendrik" to "https://github.com/HenreCoetzee",
-                                "Ryan" to "https://github.com/RyanMostert",
-                                "Barend" to "https://github.com/Oats10",
-                                "Simeon" to "https://github.com/SimeonMomberg"
-                            ))
+                            clickableText(
+                                offset,
+                                listOf(
+                                    "Ian" to "https://github.com/IanTerHaar",
+                                    "Hendrik" to "https://github.com/HenreCoetzee",
+                                    "Ryan" to "https://github.com/RyanMostert",
+                                    "Barend" to "https://github.com/Oats10",
+                                    "Simeon" to "https://github.com/SimeonMomberg"
+                                )
+                            )
                         }
                     )
                 },
