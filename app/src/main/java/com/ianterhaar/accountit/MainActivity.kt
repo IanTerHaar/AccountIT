@@ -108,13 +108,13 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                                 expanded = showProfileMenu,
                                 onDismissRequest = { showProfileMenu = false }
                             ) {
-                                DropdownMenuItem(
-                                    text = { Text("Edit Profile") },
-                                    onClick = {
-                                        // Handle edit profile
-                                        showProfileMenu = false
-                                    }
-                                )
+//                                DropdownMenuItem(
+//                                    text = { Text("Edit Profile") },
+//                                    onClick = {
+//                                        // Handle edit profile
+//                                        showProfileMenu = false
+//                                    }
+//                                )
                                 DropdownMenuItem(
                                     text = { Text("Settings") },
                                     onClick = {
