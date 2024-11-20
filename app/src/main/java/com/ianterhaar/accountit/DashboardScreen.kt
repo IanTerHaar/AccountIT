@@ -468,7 +468,7 @@ fun ManageIncomeDialog(
         text = {
             Column {
                 Text(
-                    "Current Total Income: R$currentIncome",
+                    "Current Total Income: $currencySymbol$currentIncome",
                     fontSize = 18.sp,
                     color = TealColor,
                     modifier = Modifier.padding(bottom = 16.dp)
