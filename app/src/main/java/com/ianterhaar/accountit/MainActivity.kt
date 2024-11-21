@@ -58,15 +58,11 @@ fun getGreeting(): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(userRepository: UserRepository, budgetTrackingRepository: BudgetTrackingRepository) {
-    var currentScreen by remember { mutableIntStateOf(0) } // 0: login, 1: register, 2: dashboard, 3: settings
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var currentScreen by remember { mutableStateOf(0) } // 0: login, 1: register, 2: dashboard, 3: settings
+    var selectedTab by remember { mutableStateOf(0) }
     var userState by remember { mutableStateOf(UserState()) }
     var showProfileMenu by remember { mutableStateOf(false) }
 
-    /*
-    * This if statement allows for when you are on the settings tab to press the back button on
-    * you phone navigation to return to the dashboard screen again.
-    */
     if (currentScreen == 3) {
         BackHandler {
             currentScreen = 2
@@ -80,7 +76,7 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                     TopAppBar(
                         title = {
                             Row(
-                                modifier = Modifier.fillMaxWidth(0.85f), // Reduced width to make room for profile button
+                                modifier = Modifier.fillMaxWidth(0.85f),
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 if (userState.isLoggedIn) {
@@ -94,7 +90,6 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                             }
                         },
                         actions = {
-                            // Profile Button
                             IconButton(onClick = { showProfileMenu = true }) {
                                 Icon(
                                     imageVector = Icons.Default.Person,
@@ -102,18 +97,10 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                                     tint = Color.White
                                 )
                             }
-                            // Profile Dropdown Menu
                             DropdownMenu(
                                 expanded = showProfileMenu,
                                 onDismissRequest = { showProfileMenu = false }
                             ) {
-//                                DropdownMenuItem(
-//                                    text = { Text("Edit Profile") },
-//                                    onClick = {
-//                                        // Handle edit profile
-//                                        showProfileMenu = false
-//                                    }
-//                                )
                                 DropdownMenuItem(
                                     text = { Text("Settings") },
                                     onClick = {
@@ -188,10 +175,12 @@ fun MainContent(userRepository: UserRepository, budgetTrackingRepository: Budget
                             userRepository = userRepository,
                             userId = userState.userId
                         )
-                        1 -> SavingsTrackingScreen(
-                            userRepository = userRepository,
-                            userId = userState.userId.toLong()
-                        )
+                        1 -> {
+                            SavingsTrackingScreen(
+                                userId = userState.userId.toLong(),
+                                userRepository = userRepository
+                            )
+                        }
                     }
                 }
                 3 -> SettingsScreen(
@@ -212,14 +201,13 @@ fun BudgetTrackingScreen(
     var totalBudget by remember { mutableStateOf(0.0) }
     var income by remember { mutableStateOf(0.0) }
     var categories by remember { mutableStateOf(emptyList<BudgetCategory>()) }
-    var currencySymbol by remember { mutableStateOf("R") } // Default symbol
+    var currencySymbol by remember { mutableStateOf("R") }
 
-    // Load data from the database when the screen is first composed
     LaunchedEffect(Unit) {
         totalBudget = budgetTrackingRepository.getTotalBudget(userId)
         income = budgetTrackingRepository.getIncome(userId)
         categories = budgetTrackingRepository.getCategories(userId)
-        currencySymbol = userRepository.getCurrency(userId) ?: "R" // Fetch and set the currency symbol
+        currencySymbol = userRepository.getCurrency(userId) ?: "R"
     }
 
     var showSetBudgetDialog by remember { mutableStateOf(false) }

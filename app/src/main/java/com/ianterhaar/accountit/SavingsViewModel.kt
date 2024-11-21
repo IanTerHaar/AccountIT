@@ -73,6 +73,18 @@ class SavingsViewModel(
             }
         }
     }
+
+
+    fun deleteSavingsGoal(goalName: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteSavingsGoal(userId, goalName)
+                loadData()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }
 
 class SavingsViewModelFactory(
