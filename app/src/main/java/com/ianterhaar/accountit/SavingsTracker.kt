@@ -35,22 +35,20 @@ private val orangeColor = Color(0xFFFF5722)
 
 @Composable
 fun SavingsTrackingScreen(
-    userId : Long,
+    userId: Long,
     userRepository: UserRepository,
     viewModel: SavingsViewModel = viewModel(
         factory = SavingsViewModelFactory(LocalContext.current, userId)
     )
-
 ) {
-
     val totalSavings by viewModel.totalSavings.collectAsState()
     val savingsGoals by viewModel.savingsGoals.collectAsState()
     var showAddGoalDialog by remember { mutableStateOf(false) }
     var showAddSavingsDialog by remember { mutableStateOf(false) }
     var showTransactionHistory by remember { mutableStateOf(false) }
-    var currencySymbol by remember { mutableStateOf("R") } // Default symbol
+    var showDeleteConfirmation by remember { mutableStateOf<String?>(null) }  // Add this
+    var currencySymbol by remember { mutableStateOf("R") }
     currencySymbol = userRepository.getCurrency(userId.toInt()) ?: "R"
-
 
     Column(
         modifier = Modifier
@@ -78,13 +76,45 @@ fun SavingsTrackingScreen(
                     currencySymbol = currencySymbol,
                     onAddSavings = { amount ->
                         viewModel.addSavings(goal.name, amount)
-                    }
+                    },
+                    onDelete = { showDeleteConfirmation = goal.name }  // Add this
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 
+    // Add delete confirmation dialog
+    showDeleteConfirmation?.let { goalName ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = null },
+            containerColor = Color.White,
+            titleContentColor = tealColor,
+            title = { Text("Delete Savings Goal") },
+            text = { Text("Are you sure you want to delete '$goalName'? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteSavingsGoal(goalName)
+                        showDeleteConfirmation = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = orangeColor)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteConfirmation = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = tealColor)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Keep your existing dialogs
     if (showAddGoalDialog) {
         AddSavingsGoalDialog(
             currencySymbol = currencySymbol,
@@ -230,6 +260,7 @@ private fun TotalSavingsCard(
 private fun SavingsGoalCard(
     goal: SavingsGoal,
     onAddSavings: (Double) -> Unit,
+    onDelete: () -> Unit,  // Add this
     currencySymbol: String
 ) {
     Card(
@@ -241,17 +272,33 @@ private fun SavingsGoalCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = goal.name,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (goal.deadline != null) {
-                    Text(
-                        text = "Due: ${formatDate(goal.deadline)}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (goal.deadline != null) {
+                        Text(
+                            text = "Due: ${formatDate(goal.deadline)}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Remove,
+                            contentDescription = "Delete goal",
+                            tint = orangeColor
+                        )
+                    }
                 }
             }
 
@@ -295,7 +342,6 @@ private fun SavingsGoalCard(
         }
     }
 }
-
 @Composable
 private fun AddSavingsGoalDialog(
     onDismiss: () -> Unit,

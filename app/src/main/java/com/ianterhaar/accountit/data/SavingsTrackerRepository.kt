@@ -61,7 +61,7 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
         if (rowsAffected == 0) {
             val values = ContentValues().apply {
                 put(DatabaseHelper.COLUMN_SAVING_USER_ID, userId)
-                put(DatabaseHelper.COLUMN_AMOUNT, amount) // Use the new amount as there's no existing record
+                put(DatabaseHelper.COLUMN_AMOUNT, amount)
                 put(DatabaseHelper.COLUMN_DESCRIPTION, goalName)
                 put(DatabaseHelper.COLUMN_TYPE, "goal")
                 put(DatabaseHelper.COLUMN_DATE, Date().toString())
@@ -70,6 +70,14 @@ class SavingsTrackerRepository(private val dbHelper: DatabaseHelper) {
         }
     }
 
+    fun deleteSavingsGoal(userId: Long, goalName: String) {
+        val db = dbHelper.writableDatabase
+        db.delete(
+            DatabaseHelper.TABLE_SAVINGS,
+            "${DatabaseHelper.COLUMN_SAVING_USER_ID} = ? AND ${DatabaseHelper.COLUMN_DESCRIPTION} = ? AND ${DatabaseHelper.COLUMN_TYPE} = ?",
+            arrayOf(userId.toString(), goalName, "goal")
+        )
+    }
 
     fun getSavingsGoals(userId: Long): List<SavingsGoal> {
         val db = dbHelper.readableDatabase
