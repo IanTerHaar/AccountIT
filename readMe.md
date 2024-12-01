@@ -33,7 +33,11 @@ This project was developed by a team of dedicated software engineers:
 - **[Ian Ter Haar](https://github.com/Oats10)**
 - **[Ian Ter Haar](https://github.com/SimeonMomberg)**
 
+---
+
 🌟 Acknowledgements
 We would like to thank our mentors and peers for their invaluable guidance and feedback throughout the development of AccountIT.
 
 Feel free to contribute, fork, or share feedback to improve AccountIT further! 🎉
+
+---
