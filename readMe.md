@@ -29,9 +29,9 @@ This project was developed by a team of dedicated software engineers:
 
 - **[Ian Ter Haar](https://github.com/IanTerHaar)**
 - **[Henre Coetzee](https://github.com/HenreCoetzee)**
-- **[Ian Ter Haar](https://github.com/RyanMostert)**
-- **[Ian Ter Haar](https://github.com/Oats10)**
-- **[Ian Ter Haar](https://github.com/SimeonMomberg)**
+- **[Ryan Mostert](https://github.com/RyanMostert)**
+- **[Ben Kock](https://github.com/Oats10)**
+- **[Simeon Momberg](https://github.com/SimeonMomberg)**
 
 ---
 
