@@ -27,7 +27,7 @@ Welcome to **AccountIT**, a comprehensive financial management application desig
 
 This project was developed by a team of dedicated software engineers:
 
-- **Ian Ter Haar** - [GitHub Profile](https://github.com/IanTerHaar)
+- **[Ian Ter Haar](https://github.com/IanTerHaar)**
 
 🌟 Acknowledgements
 We would like to thank our mentors and peers for their invaluable guidance and feedback throughout the development of AccountIT.
