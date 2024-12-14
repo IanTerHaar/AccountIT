@@ -1,0 +1,95 @@
+/* General styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
+    color: #333;
+  }
+
+  header {
+    background-color: #008081;
+    color: #fff;
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  /* Navbar styles */
+.navbar {
+    background-color: #008081;
+    padding: 0.5rem 0;
+  }
+
+  .navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .navbar li {
+    margin: 0;
+  }
+
+  .navbar a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .navbar a:hover {
+    background-color: #01b3b3;
+    color: #fff;
+    border-radius: 5px;
+  }
+
+  /* Gallery section */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 2rem;
+  }
+
+  .gallery-item {
+    overflow: hidden;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .gallery-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .description {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  /* Footer styles */
+  footer {
+    text-align: center;
+    background-color: #008081;
+    color: #fff;
+    padding: 1rem 0;
+  }
